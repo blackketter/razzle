@@ -121,7 +121,11 @@ bool button() {
   return !digitalRead(BUTTON);
 }
 
-bool lastButton = false;
+
+uint32_t lastDown = 0;
+uint32_t lastUp = 1;
+bool pressed;
+bool released;
 
 enum modes {
   WAVE,
@@ -133,21 +137,28 @@ enum modes {
   NOISE,
   WHITENOISE,
   WHITE,
+  END,
   OFF,
-  END
 };
 
 int mode = 0;
 uint32_t lastModeSwitch = 0;
 uint32_t autoSwitchInterval = 1000*60;
+const uint32_t holdTime = 1000;
 
-bool buttonDown() {
-  if (button() && !lastButton) {
-    lastButton = button();
-    return true;
+void checkButton() {
+  pressed = false;
+  released = false;
+  if (button()) {
+    if (lastUp > lastDown) {
+      lastDown = millis();
+      pressed = true;
+    }
   } else {
-    lastButton = button();
-    return false;
+    if (lastDown > lastUp) {
+      lastUp = millis();
+      released = true;
+    }
   }
 }
 
@@ -158,12 +169,25 @@ uint32_t white(uint8_t y) {
 void loop()
 {
 
-  if (buttonDown() || (millis()-lastModeSwitch) > autoSwitchInterval) {
+  checkButton();
+
+  if (pressed) {
     mode++;
     lastModeSwitch = millis();
-    if (mode == END) {
+    if (mode >= END) {
       mode = 0;
     }
+  }
+
+  if ((millis()-lastModeSwitch) > autoSwitchInterval && mode != OFF) {
+    mode++;
+    if (mode >= END) {
+      mode = 0;
+    }
+  }
+
+  if (button() && ((millis() - lastDown) > holdTime)) {
+    mode = OFF;
   }
 
   uint32_t fps = 0;  // unlimited
