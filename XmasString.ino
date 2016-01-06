@@ -1,14 +1,15 @@
 #include <FastLED.h>
 #include <colorutils.h>
 
-#define LED_PIN     17
+// pin 3 on Uno, 17 on Teensy LC
+#define LED_PIN     3
+
+// TeensyLC button 1, Uno button 12
+#define BUTTON (12)
+
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2811
 #define NUM_LEDS    50
-
-#define FRAMES_PER_SECOND 50
-
-bool gReverseDirection = false;
 
 CRGB leds[NUM_LEDS];
 
@@ -61,9 +62,6 @@ CRGB leds[NUM_LEDS];
 #define LEDS_RIGHT (0)
 #define LEDS_TOP (LEDS_MIDPOINT-6)
 #define LEDS_LEFT (LEDS_MIDPOINT+6)
-
-
-#define BUTTON (1)
 
 void Fire2012()
 {
@@ -128,8 +126,9 @@ bool pressed;
 bool released;
 
 enum modes {
+  FIRSTMODE,
+  FIRE = FIRSTMODE,
   WAVE,
-  FIRE,
   FLASHES,
   ZIP,
   RAINBOW,
@@ -139,11 +138,12 @@ enum modes {
   WHITE,
   END,
   OFF,
+  ON,
 };
 
-int mode = 0;
+int mode = FIRSTMODE;
 uint32_t lastModeSwitch = 0;
-uint32_t autoSwitchInterval = 1000*60;
+uint32_t autoSwitchInterval = 1000L*60;
 const uint32_t holdTime = 1000;
 
 void checkButton() {
@@ -163,7 +163,8 @@ void checkButton() {
 }
 
 uint32_t white(uint8_t y) {
-  return (uint32_t)y + (y << 8) + (y<<16);
+  uint32_t y32 = y;
+  return y32 + (y32 << 8) + (y32<<16);
 }
 
 void loop()
@@ -175,24 +176,30 @@ void loop()
     mode++;
     lastModeSwitch = millis();
     if (mode >= END) {
-      mode = 0;
+      mode = FIRSTMODE;
     }
   }
 
-  if ((millis()-lastModeSwitch) > autoSwitchInterval && mode != OFF) {
+  if ((millis()-lastModeSwitch) > autoSwitchInterval && mode < END) {
     mode++;
+    lastModeSwitch = millis();
     if (mode >= END) {
-      mode = 0;
+      mode = FIRSTMODE;
     }
   }
 
-  if (button() && ((millis() - lastDown) > holdTime)) {
-    mode = OFF;
+  if (button()) {
+    if ((millis() - lastDown) > 2*holdTime) {
+    mode = ON;
+    } else if ((millis() - lastDown) > holdTime) {
+      mode = OFF;
+    }
   }
 
   uint32_t fps = 0;  // unlimited
 
   switch (mode) {
+
     case WAVE:
       static uint16_t waveoff = 0;
       for (int i = 0; i < NUM_LEDS; i++) {
@@ -200,16 +207,20 @@ void loop()
         leds[i]=white(y);
       }
       waveoff+=100;
+      fps = 100;
       break;
+
     case FIRE:
       Fire2012(); // run simulation frame
       fps = 50;
       break;
+
     case FLASHES:
       fill_solid( leds, NUM_LEDS, CRGB::Black);
       leds[random(NUM_LEDS)] = CRGB::White;
       fps = 50;
       break;
+
     case ZIP:
       static int zipper = 0;
       zipper = zipper % NUM_LEDS;
@@ -217,25 +228,32 @@ void loop()
       leds[zipper++] = CRGB::White;
       fps = 100;
       break;
+
     case RAINBOW:
       fill_rainbow(leds, NUM_LEDS, 0);
       break;
+
     case RAINBOWROTATE:
       static uint8_t cycle;
       fill_rainbow(leds, NUM_LEDS, cycle++);
       break;
+
     case WHITENOISE:
       for (int i = 0; i < NUM_LEDS; i++) {
         uint8_t y = random(256);
         leds[i] = white(y);
       }
       break;
+
     case NOISE:
       leds[random(NUM_LEDS)] = random(0x00ffffff);
       break;
+
     case WHITE:
+    case ON:
       fill_solid(leds, NUM_LEDS, CRGB::White);
       break;
+
     case OFF:
       fill_solid(leds, NUM_LEDS, CRGB::Black);
       break;
@@ -244,7 +262,7 @@ void loop()
 
     FastLED.show();
     if (fps) {
-      FastLED.delay(1000/fps);
+      FastLED.delay(1000L/fps);
     }
 }
 
