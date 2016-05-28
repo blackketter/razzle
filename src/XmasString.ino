@@ -1,11 +1,14 @@
 #include <FastLED.h>
 #include <colorutils.h>
+#include "Switch.h"
 
-// pin 3 on Uno, 17 on Teensy LC
-#define LED_PIN     3
+// pin 3 on Uno, D0 ON Wemos D1, 17 on Teensy LC
+#define LED_DATA_PIN (3)
 
-// TeensyLC button 1, Uno button 12
-#define BUTTON (12)
+// TeensyLC button 1, Uno button 12, Wemos D1 pin D6
+#define BUTTON_PIN (D2)
+
+Switch button = Switch(BUTTON_PIN);  // Switch between a digital pin and GND
 
 #define COLOR_ORDER RGB
 #define CHIPSET     WS2811
@@ -180,17 +183,11 @@ void setup() {
 //  while (! Serial); // Wait untilSerial is ready
 //  Serial.println("Hello");
 
-  FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
+  FastLED.addLeds<CHIPSET, LED_DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
 
-  pinMode(BUTTON, INPUT);      // Push-Button On Bread Board
-  digitalWrite(BUTTON, HIGH);  // Turn on internal Pull-Up Resistor
+  pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
 
 }
-
-bool button() {
-  return !digitalRead(BUTTON);
-}
-
 
 uint32_t lastDown = 0;
 uint32_t lastUp = 1;
@@ -199,8 +196,8 @@ bool released;
 
 enum modes {
   FIRSTMODE,
-  LIFE = FIRSTMODE,
-  FIRE,
+  FIRE = FIRSTMODE,
+  LIFE,
   BREATHING,
   WAVE,
   FLASHES,
@@ -217,24 +214,8 @@ enum modes {
 
 int mode = FIRSTMODE;
 uint32_t lastModeSwitch = 0;
-uint32_t autoSwitchInterval = 1000L * 60 * 5;
+uint32_t autoSwitchInterval = 1000L * 5 * 60;
 const uint32_t holdTime = 1000;
-
-void checkButton() {
-  pressed = false;
-  released = false;
-  if (button()) {
-    if (lastUp > lastDown) {
-      lastDown = nowMillis;
-      pressed = true;
-    }
-  } else {
-    if (lastDown > lastUp) {
-      lastUp = nowMillis;
-      released = true;
-    }
-  }
-}
 
 uint32_t white(uint8_t y) {
   uint32_t y32 = y;
@@ -261,7 +242,7 @@ void render(CRGB* frame, uint32_t time) {
     case WAVE:
       static uint16_t waveoff = 0;
       for (int i = 0; i < NUM_LEDS; i++) {
-        uint8_t y = (sin16(((long)i * 65536) / NUM_LEDS + waveoff) + 32767) >> 8;
+        uint8_t y = (sin16(((int32_t)i * 65536) / NUM_LEDS + waveoff) + 32767) >> 8;
         frame[i] = white(y);
       }
       waveoff += 100;
@@ -337,17 +318,13 @@ void setMode(int newMode) {
 void loop()
 {
 
+  static bool led_state = LOW;
+  led_state = !led_state;
+  digitalWrite(BUILTIN_LED, led_state);
+
+  button.poll();
+
   nowMillis = millis();
-
-  checkButton();
-
-  if (pressed) {
-    mode++;
-    lastModeSwitch = nowMillis;
-    if (mode >= END) {
-      mode = FIRSTMODE;
-    }
-  }
 
   if ((nowMillis - lastModeSwitch) > autoSwitchInterval && mode < END) {
     mode++;
@@ -355,14 +332,19 @@ void loop()
     if (mode >= END) {
       mode = FIRSTMODE;
     }
-  }
+  } else {
 
-  if (button()) {
-    if ((nowMillis - lastDown) > 2 * holdTime) {
-      mode = ON;
-    } else if ((nowMillis - lastDown) > holdTime) {
+    if (button.longPress()) {
       mode = OFF;
+    } else if (button.released()) {
+      mode++;
+      lastModeSwitch = nowMillis;
+      if (mode >= END) {
+        mode = FIRSTMODE;
+      }
     }
+
+
   }
 
   if (nowMillis >= nextFrameMillis) {
