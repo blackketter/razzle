@@ -1,20 +1,9 @@
-#include <FastLED.h>
+#include "RazzleLeds.h"
 #include <colorutils.h>
-#include "Switch.h"
 
-// pin 3 on Uno, D0 ON Wemos D1, 17 on Teensy LC
-#define LED_DATA_PIN (3)
-
-// TeensyLC button 1, Uno button 12, Wemos D1 pin D6
-#define BUTTON_PIN (D2)
-
-Switch button = Switch(BUTTON_PIN);  // Switch between a digital pin and GND
-
-#define COLOR_ORDER RGB
+#define LED_DATA_PIN (D2)
 #define CHIPSET     WS2811
-#define NUM_LEDS    50
-
-uint32_t nowMillis;
+#define NUM_LEDS    64
 
 CRGB leds[NUM_LEDS];
 
@@ -27,7 +16,24 @@ uint8_t lastFrame = 0;
 const uint32_t defaultFrameInterval = 1;  // as fast as possible
 uint32_t frameIntervalMillis = defaultFrameInterval;
 
-inline void fps(uint32_t f)  { frameIntervalMillis = 1000/f; }
+inline void fps(uint32_t f)  { frameIntervalMillis = 1000/f; };
+
+uint32_t nowMillis;
+
+void  setupLeds(EOrder order, int led_count) {
+
+  switch (order) {
+    case RGB:
+      FastLED.addLeds<CHIPSET, LED_DATA_PIN, RGB>(leds, led_count).setCorrection( TypicalLEDStrip );
+      break;
+    case GRB:
+      FastLED.addLeds<CHIPSET, LED_DATA_PIN, GRB>(leds, led_count).setCorrection( TypicalLEDStrip );
+      break;
+    default:
+      Serial.println("ERROR: Bad color order");
+  }
+}
+
 
 void interpolateFrame() {
 
@@ -178,44 +184,12 @@ void Fire2012(CRGB* frame)
   }
 }
 
-void setup() {
-//  Serial.begin(115200);
-//  while (! Serial); // Wait untilSerial is ready
-//  Serial.println("Hello");
 
-  FastLED.addLeds<CHIPSET, LED_DATA_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
-
-  pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
-
-}
-
-uint32_t lastDown = 0;
-uint32_t lastUp = 1;
-bool pressed;
-bool released;
-
-enum modes {
-  FIRSTMODE,
-  FIRE = FIRSTMODE,
-  LIFE,
-  BREATHING,
-  WAVE,
-  FLASHES,
-  ZIP,
-//  RAINBOW,
-  RAINBOWROTATE,
-  NOISE,
-  WHITENOISE,
-  WHITE,
-  END,
-  OFF,
-  ON,
-};
 
 int mode = FIRSTMODE;
-uint32_t lastModeSwitch = 0;
-uint32_t autoSwitchInterval = 1000L * 5 * 60;
-const uint32_t holdTime = 1000;
+
+void  setLedMode(int newmode) { mode = newmode; };
+int   getLedMode() { return mode;};
 
 uint32_t white(uint8_t y) {
   uint32_t y32 = y;
@@ -315,38 +289,8 @@ void setMode(int newMode) {
   render(frames[nextFrame], nextFrameMillis);
 }
 
-void loop()
-{
-
-  static bool led_state = LOW;
-  led_state = !led_state;
-  digitalWrite(BUILTIN_LED, led_state);
-
-  button.poll();
-
+void loopLeds() {
   nowMillis = millis();
-
-  if ((nowMillis - lastModeSwitch) > autoSwitchInterval && mode < END) {
-    mode++;
-    lastModeSwitch = nowMillis;
-    if (mode >= END) {
-      mode = FIRSTMODE;
-    }
-  } else {
-
-    if (button.longPress()) {
-      mode = OFF;
-    } else if (button.released()) {
-      mode++;
-      lastModeSwitch = nowMillis;
-      if (mode >= END) {
-        mode = FIRSTMODE;
-      }
-    }
-
-
-  }
-
   if (nowMillis >= nextFrameMillis) {
     uint8_t temp = lastFrame;
     lastFrame = nextFrame;
@@ -361,4 +305,3 @@ void loop()
   interpolateFrame();
   FastLED.show();
 }
-
