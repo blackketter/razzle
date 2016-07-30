@@ -20,6 +20,7 @@ enum modes {
 
 void  setLedMode(int newmode);
 int   getLedMode();
+uint32_t lastModeSwitch();
 
 void  setupLeds(EOrder order, int led_count);
 void  loopLeds();

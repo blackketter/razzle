@@ -195,13 +195,11 @@ void loop()
     // do not update LEDs or respond to button
 
   } else {
-    uint32_t lastModeSwitch = 0;
     // update display
     uint32_t nowMillis = millis();
 
-    if ((nowMillis - lastModeSwitch) > autoSwitchInterval && getLedMode() < END) {
+    if ((nowMillis - lastModeSwitch()) > autoSwitchInterval && getLedMode() < END) {
       setLedMode(getLedMode()+1);
-      lastModeSwitch = nowMillis;
       if (getLedMode() >= END) {
         setLedMode(FIRSTMODE);
       }
@@ -222,19 +220,10 @@ void loop()
           case ON:
             setLedMode(OFF);
             Serial.println("Mode: Off");
-            if (isRemote()) {
-              httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=off&ph=0&");
-              button.poll();
-
-            }
             break;
           case OFF:
             setLedMode(ON);
             Serial.println("Mode: On");
-            if (isRemote()) {
-              httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=on&ph=0&");
-              button.poll();
-            }
             break;
           default:
             setLedMode(getLedMode()+1);
@@ -243,7 +232,25 @@ void loop()
             }
             Serial.printf("Mode: %d\n", getLedMode());
         }
-        lastModeSwitch = nowMillis;
+      } else if (button.released()) {
+        Serial.println("Button released");
+        switch (getLedMode()) {
+          case OFF:
+            Serial.println("Mode: Off");
+            if (isRemote()) {
+              httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=off&ph=0&");
+            }
+            break;
+          case ON:
+            setLedMode(ON);
+            Serial.println("Mode: On");
+            if (isRemote()) {
+              httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=on&ph=0&");
+            }
+            break;
+          default:
+            break;
+        }
       }
     }
 
