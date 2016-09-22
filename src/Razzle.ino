@@ -48,9 +48,9 @@ bool recoverMode = false;
 bool networkUp = false;
 
 devInfo devices[] = {
-  { "5C:CF:7F:18:EA:42", "RazzleButton", 1, RGB, LIGHT_SENSOR_LED_N_PIN, LIGHT_SENSOR_LED_P_PIN },
-  { "5C:CF:7F:10:4C:43", "RazzleString", 50, RGB, 0, 0 },
-  { "5C:CF:7F:16:E6:EC", "RazzleBox", 64, GRB, LIGHT_SENSOR_LED_N_PIN, LIGHT_SENSOR_LED_P_PIN },
+  { "5C:CF:7F:18:EA:42", "RazzleButton", 1, RGB },
+  { "5C:CF:7F:10:4C:43", "RazzleString", 50, RGB },
+  { "5C:CF:7F:16:E6:EC", "RazzleBox", 64, GRB },
   { nullptr, "RazzleUndef", 1, RGB }
 };
 
@@ -206,7 +206,7 @@ void loop()
 //    }
 //  } else {
 //    Serial.println("No ambient sensor");
-  }
+//  }
 
   timeClient.update();
   button.poll();
