@@ -1,3 +1,4 @@
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266mDNS.h>
 #include <ESP8266HTTPClient.h>
@@ -8,7 +9,7 @@
 #include "Switch.h"
 #include <Encoder.h>
 
-#include "Time.h"
+#include "TimeLib.h"
 
 #include "RazzleLeds.h"
 
@@ -16,12 +17,13 @@ const char* ssid = "bkn";
 const char* password = "5d4bf72344";
 const char* myHostname;
 
-
 struct devInfo {
   const char* mac;
   const char* hostname;
   int numLeds;
   EOrder colorOrder;
+//  byte ambient_anode;
+//  byte ambient_cathode;
 };
 
 // By default 'time.nist.gov' is used with 60 seconds update interval and
@@ -36,17 +38,19 @@ Switch button = Switch(BUTTON_PIN);  // Switch between a digital pin and GND
 #define ENCODER_B_PIN (D8)
 Encoder knob(ENCODER_A_PIN,ENCODER_B_PIN);
 
-#define LIGHT_SENSOR_LED_C_PIN (D5)
-#define LIGHT_SENSOR_LED_A_PIN (D0)
+#define LIGHT_SENSOR_LED_N_PIN (D0)
+#define LIGHT_SENSOR_LED_P_PIN (D5)
+
+//LEDAmbientSensor* ambient = nullptr;
 
 bool firstRun = true;
 bool recoverMode = false;
 bool networkUp = false;
 
 devInfo devices[] = {
-  { "5C:CF:7F:18:EA:42", "RazzleButton", 1, RGB },
-  { "5C:CF:7F:10:4C:43", "RazzleString", 50, RGB },
-  { "5C:CF:7F:16:E6:EC", "RazzleBox", 64, GRB },
+  { "5C:CF:7F:18:EA:42", "RazzleButton", 1, RGB, LIGHT_SENSOR_LED_N_PIN, LIGHT_SENSOR_LED_P_PIN },
+  { "5C:CF:7F:10:4C:43", "RazzleString", 50, RGB, 0, 0 },
+  { "5C:CF:7F:16:E6:EC", "RazzleBox", 64, GRB, LIGHT_SENSOR_LED_N_PIN, LIGHT_SENSOR_LED_P_PIN },
   { nullptr, "RazzleUndef", 1, RGB }
 };
 
@@ -152,6 +156,9 @@ void loopWifi() {
 }
 
 void setup() {
+  pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
+  digitalWrite(BUILTIN_LED, true);  // true = LED off
+
   Serial.begin(115200);
   while (! Serial); // Wait untilSerial is ready
 
@@ -160,10 +167,17 @@ void setup() {
   Serial.println("World!");
   setupLeds(getDevice().colorOrder, getDevice().numLeds);
 
-  pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
-  digitalWrite(BUILTIN_LED, true);  // true = LED off
-
   setupWifi();
+
+//  if (getDevice().ambient_anode != getDevice().ambient_cathode) {
+//    ambient = new LEDAmbientSensor(getDevice().ambient_anode, getDevice().ambient_cathode);
+// }
+
+/*  pinMode(D5, OUTPUT);
+  pinMode(D0, OUTPUT);
+  digitalWrite(D5, true);
+  digitalWrite(D0, false);
+*/
 }
 
 uint32_t lastDown = 0;
@@ -180,6 +194,18 @@ void loop()
   if (lastTime != now()) {
     Serial.println(timeClient.getFormattedTime());
     lastTime = now();
+
+  }
+
+//  if (ambient) {
+//    static uint8_t lastAmbient = 0;
+//    uint8_t currAmbient = ambient->read();
+//    if (lastAmbient != currAmbient) {
+//      Serial.printf("Ambient: %d\n", currAmbient);
+//     lastAmbient = currAmbient;
+//    }
+//  } else {
+//    Serial.println("No ambient sensor");
   }
 
   timeClient.update();

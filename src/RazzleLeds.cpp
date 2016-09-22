@@ -25,18 +25,21 @@ uint32_t lastModeSwitchTime = 0;
 
 void  setupLeds(EOrder order, int led_count) {
 
-  num_leds = led_count;
+  num_leds = led_count >  MAX_NUM_LEDS ?  MAX_NUM_LEDS : led_count;
 
   switch (order) {
     case RGB:
-      FastLED.addLeds<CHIPSET, LED_DATA_PIN, RGB>(leds, led_count).setCorrection( TypicalLEDStrip );
+      FastLED.addLeds<CHIPSET, LED_DATA_PIN, RGB>(leds, num_leds).setCorrection( TypicalLEDStrip );
       break;
     case GRB:
-      FastLED.addLeds<CHIPSET, LED_DATA_PIN, GRB>(leds, led_count).setCorrection( TypicalLEDStrip );
+      FastLED.addLeds<CHIPSET, LED_DATA_PIN, GRB>(leds, num_leds).setCorrection( TypicalLEDStrip );
       break;
     default:
       Serial.println("ERROR: Bad color order");
   }
+
+  fill_solid(leds, num_leds, CRGB::Black);
+  FastLED.show();
 }
 
 
