@@ -2,7 +2,7 @@
 #include <Switch.h>
 #include <Encoder.h>
 #include <TimeLib.h>
-
+#include <WiFiConsole.h>
 #include <myWifi.h>
 
 #include "RazzleLeds.h"
@@ -13,6 +13,7 @@ Switch button = Switch(BUTTON_PIN);  // Switch between a digital pin and GND
 #define ENCODER_A_PIN (D7)
 #define ENCODER_B_PIN (D8)
 Encoder knob(ENCODER_A_PIN,ENCODER_B_PIN);
+WiFiConsole console = WiFiConsole();
 
 bool firstRun = true;
 bool recoverMode = false;
@@ -51,15 +52,15 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
   digitalWrite(BUILTIN_LED, true);  // true = LED off
 
-  Serial.begin(115200);
-  while (! Serial); // Wait untilSerial is ready
 
-  Serial.println("\nHello");
+  console.debugln("\nHello");
   delay(1000);
-  Serial.println("World!");
+  console.debugln("World!");
   setupLeds(getDevice().colorOrder, getDevice().numLeds);
 
   setupWifi(getDevice().hostname, -7*60*60);
+
+  console.begin();
 }
 
 uint32_t lastDown = 0;
@@ -72,9 +73,11 @@ const uint32_t holdTime = 1000;
 
 void loop()
 {
+  console.loop();
+
   static time_t lastTime = now();
   if (lastTime != now()) {
-    Serial.println(now());
+    console.debugf("date: %d\n",now());
     lastTime = now();
   }
 
@@ -83,7 +86,7 @@ void loop()
 
   if (firstRun && button.on()) {
     recoverMode = true;
-    Serial.println("RECOVER MODE");
+    console.debugln("RECOVER MODE");
   }
 
   if (recoverMode) {
@@ -98,7 +101,7 @@ void loop()
       if (getLedMode() >= END) {
         setLedMode(FIRSTMODE);
       }
-      Serial.printf("Autoswitch to mode %d\n", getLedMode());
+      console.debugf("Autoswitch to mode %d\n", getLedMode());
     } else {
 
       if (button.longPress()) {
@@ -107,38 +110,38 @@ void loop()
         } else {
            setLedMode(OFF);
         }
-        Serial.printf("Longpress, now mode: %d\n", getLedMode());
+        console.debugf("Longpress, now mode: %d\n", getLedMode());
       }
       if (button.pushed()) {
-        Serial.println("Button pushed");
+        console.debugln("Button pushed");
         switch (getLedMode()) {
           case ON:
             setLedMode(OFF);
-            Serial.println("Mode: Off");
+            console.debugln("Mode: Off");
             break;
           case OFF:
             setLedMode(ON);
-            Serial.println("Mode: On");
+            console.debugln("Mode: On");
             break;
           default:
             setLedMode(getLedMode()+1);
             if (getLedMode() >= END) {
               setLedMode(FIRSTMODE);
             }
-            Serial.printf("Mode: %d\n", getLedMode());
+            console.printf("Mode: %d\n", getLedMode());
         }
       } else if (button.released()) {
-        Serial.println("Button released");
+        console.debugln("Button released");
         switch (getLedMode()) {
           case OFF:
-            Serial.println("Mode: Off");
+            console.debugln("Mode: Off");
             if (isRemote()) {
               httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=off&ph=0&");
             }
             break;
           case ON:
             setLedMode(ON);
-            Serial.println("Mode: On");
+            console.debugln("Mode: On");
             if (isRemote()) {
               httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=on&ph=0&");
             }

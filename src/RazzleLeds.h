@@ -2,7 +2,8 @@
 
 enum modes {
   FIRSTMODE,
-  FIRE = FIRSTMODE,
+  AMBIENT = FIRSTMODE,
+  FIRE,
   LIFE,
   BREATHING,
   WAVE,

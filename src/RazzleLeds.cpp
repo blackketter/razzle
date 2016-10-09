@@ -1,9 +1,13 @@
 #include "RazzleLeds.h"
 #include <colorutils.h>
+#include <WiFiConsole.h>
+extern WiFiConsole console;
 
 #define LED_DATA_PIN (D2)
 #define CHIPSET     WS2811
 #define MAX_NUM_LEDS    64
+
+#define LIGHT_SENSOR (A0)
 
 int num_leds;
 
@@ -35,7 +39,7 @@ void  setupLeds(EOrder order, int led_count) {
       FastLED.addLeds<CHIPSET, LED_DATA_PIN, GRB>(leds, num_leds).setCorrection( TypicalLEDStrip );
       break;
     default:
-      Serial.println("ERROR: Bad color order");
+      console.debugln("ERROR: Bad color order");
   }
 
   fill_solid(leds, num_leds, CRGB::Black);
@@ -214,7 +218,18 @@ void render(CRGB* frame, uint32_t time) {
 
   fps(1000);  // as fast as possible
 
+  uint32_t ambient;
   switch (mode) {
+
+    case AMBIENT:
+      fps(3);
+      ambient = analogRead(LIGHT_SENSOR);
+//      ambient = ambient*ambient/1024;
+      console.debugf("ambient: %d\n", ambient);
+      fill_solid( frame, num_leds, CRGB::Black);
+      fill_solid( frame, num_leds * ambient / 1024, CRGB::Green);
+      break;
+
     case LIFE:
       fps(1);
       life(frame);
