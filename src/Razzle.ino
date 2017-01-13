@@ -1,19 +1,24 @@
 #include <Arduino.h>
 #include <Switch.h>
 #include <Encoder.h>
-#include <TimeLib.h>
-#include <WiFiConsole.h>
-#include <myWifi.h>
+#include <WiFiThing.h>
+#include <Clock.h>
 
+#include "Credentials.h"
 #include "RazzleLeds.h"
+
+// needed by platformio
+#include "ESP8266WiFi.h"
+#include "NTPClient.h"
 
 #define BUTTON_PIN (D6)
 Switch button = Switch(BUTTON_PIN);  // Switch between a digital pin and GND
 
+WiFiThing thing;
+
 #define ENCODER_A_PIN (D7)
 #define ENCODER_B_PIN (D8)
 Encoder knob(ENCODER_A_PIN,ENCODER_B_PIN);
-WiFiConsole console = WiFiConsole();
 
 bool firstRun = true;
 bool recoverMode = false;
@@ -35,7 +40,7 @@ devInfo devices[] = {
 devInfo getDevice() {
   int i = 0;
   do {
-    if (strcasecmp(devices[i].mac, WiFi.macAddress().c_str()) == 0) {
+    if (strcasecmp(devices[i].mac, thing.getMacAddress().c_str()) == 0) {
       return devices[i];
     }
     i++;
@@ -52,15 +57,11 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
   digitalWrite(BUILTIN_LED, true);  // true = LED off
 
-
-  console.debugln("\nHello");
   delay(1000);
-  console.debugln("World!");
   setupLeds(getDevice().colorOrder, getDevice().numLeds);
 
-  setupWifi(getDevice().hostname, -7*60*60);
-
-  console.begin();
+  thing.begin(ssid, passphrase);
+  thing.setHostname(getDevice().hostname);
 }
 
 uint32_t lastDown = 0;
@@ -73,16 +74,8 @@ const uint32_t holdTime = 1000;
 
 void loop()
 {
-  console.loop();
-
-  static time_t lastTime = now();
-  if (lastTime != now()) {
-    console.debugf("date: %d\n",now());
-    lastTime = now();
-  }
-
   button.poll();
-  loopWifi();
+  thing.loop();
 
   if (firstRun && button.on()) {
     recoverMode = true;
@@ -91,7 +84,6 @@ void loop()
 
   if (recoverMode) {
     // do not update LEDs or respond to button
-
   } else {
     // update display
     uint32_t nowMillis = millis();
@@ -136,14 +128,14 @@ void loop()
           case OFF:
             console.debugln("Mode: Off");
             if (isRemote()) {
-              httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=off&ph=0&");
+              thing.httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=off&ph=0&");
             }
             break;
           case ON:
             setLedMode(ON);
             console.debugln("Mode: On");
             if (isRemote()) {
-              httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=on&ph=0&");
+              thing.httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=on&ph=0&");
             }
             break;
           default:
