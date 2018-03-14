@@ -31,7 +31,7 @@ struct devInfo {
 };
 
 devInfo devices[] = {
-  { "5C:CF:7F:18:EA:42", "RazzleButton",  1, RGB },
+  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB },
   { "5C:CF:7F:10:4C:43", "RazzleString", 50, RGB },
   { "5C:CF:7F:16:E6:EC", "RazzleBox",    64, GRB },
   { nullptr,             "RazzleUndef",   1, RGB }
@@ -75,7 +75,7 @@ const uint32_t holdTime = 1000;
 void loop()
 {
   button.poll();
-  thing.loop();
+  thing.idle();
 
   if (firstRun && button.on()) {
     recoverMode = true;

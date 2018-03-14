@@ -225,7 +225,7 @@ void render(CRGB* frame, uint32_t time) {
       fps(3);
       ambient = analogRead(LIGHT_SENSOR);
 //      ambient = ambient*ambient/1024;
-      console.debugf("ambient: %d\n", ambient);
+      //console.debugf("ambient: %d\n", ambient);
       fill_solid( frame, num_leds, CRGB::Black);
       fill_solid( frame, num_leds * ambient / 1024, CRGB::Green);
       break;
