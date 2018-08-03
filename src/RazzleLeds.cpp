@@ -1,13 +1,15 @@
 #include "RazzleLeds.h"
 #include <colorutils.h>
 #include <WiFiConsole.h>
+#include <Clock.h>
+
 extern WiFiConsole console;
 
-#define LED_DATA_PIN (D2)
-#define CHIPSET     WS2811
-#define MAX_NUM_LEDS    64
+#define LED_DATA_PIN    (D2)
+#define CHIPSET         WS2811
+#define MAX_NUM_LEDS    (64)
 
-#define LIGHT_SENSOR (A0)
+#define LIGHT_SENSOR    (A0)
 
 int num_leds;
 
@@ -26,6 +28,7 @@ inline void fps(uint32_t f)  { frameIntervalMillis = 1000/f; };
 
 uint32_t nowMillis = 0;
 uint32_t lastModeSwitchTime = 0;
+uint32_t lastModeSwitch() { return lastModeSwitchTime; }
 
 void  setupLeds(EOrder order, int led_count) {
 
@@ -121,40 +124,6 @@ void breathing(CRGB* frame) {
 #define LEDS_TOP (LEDS_MIDPOINT-6)
 #define LEDS_LEFT (LEDS_MIDPOINT+6)
 
-void life(CRGB* frame) {
-  int count = 0;
-  static uint32_t lastDraw = 0;
-  uint32_t now = millis()/100;
-  if (now == lastDraw) {
-    return;
-  }
-
-  lastDraw = now;
-
-  static int iterations = 0;
-  for (int i = 0; i < num_leds; i++) {
-    if (frame[i]) { count++; }
-  };
-
-  int seed_width = 3;
-  if (count == 0 || iterations > 100) {
-    fill_solid( frame, num_leds, CRGB::Black);
-    for (int i = (LEDS_MIDPOINT - seed_width/2); i < (LEDS_MIDPOINT+seed_width/2); i++) {
-      if (random(2)) { frame[i] = CRGB::White; }
-    }
-    iterations = 0;
-  } else {
-    uint8_t rule = 110;
-    CRGB temp[num_leds];
-    for (int i = 1; i < num_leds-1; i++) {
-      uint8_t cur_pattern = (frame[i-1]!=(CRGB)CRGB::Black)*4 + (frame[i]!=(CRGB)CRGB::Black)*2 + (frame[i+1]!=(CRGB)CRGB::Black);
-      temp[i] = ((rule >> cur_pattern)&0x01) ? CRGB::White : CRGB::Black;
-    }
-    memmove( frame, temp, num_leds * sizeof( CRGB) );
-    iterations++;
-  }
-}
-
 void Fire2012(CRGB* frame)
 {
   // Array of temperature readings at each simulation cell
@@ -196,7 +165,113 @@ void Fire2012(CRGB* frame)
   }
 }
 
+///////////////////////////////////////////////////////////////////////////////
 
+typedef uint16_t frameIndex_t;
+
+const millis_t ANIMATION_END = -1;
+
+typedef struct {
+  CRGB color;
+  uint8_t offset;
+  uint8_t len;
+  millis_t delay;
+} animationFrame;
+
+typedef struct {
+} animationState;
+
+const uint8_t COPS_LEDS = 50;
+const uint8_t MIDDLE_LED = COPS_LEDS/2;
+const uint8_t SEG_LEN = 6;
+const animationFrame copsAnimation[] = {
+  { CRGB::White, MIDDLE_LED-SEG_LEN, SEG_LEN, 30},
+  { CRGB::Black, MIDDLE_LED-SEG_LEN, SEG_LEN, 160},
+  { CRGB::White, MIDDLE_LED-SEG_LEN, SEG_LEN, 30},
+  { CRGB::Black, MIDDLE_LED-SEG_LEN, SEG_LEN, 160},
+  { CRGB::White, MIDDLE_LED-SEG_LEN, SEG_LEN, 30},
+  { CRGB::Black, MIDDLE_LED-SEG_LEN, SEG_LEN, 160},
+
+  { CRGB::Blue, MIDDLE_LED-SEG_LEN, SEG_LEN, 320},
+
+  { CRGB::White, MIDDLE_LED, SEG_LEN, 30},
+  { CRGB::Black, MIDDLE_LED, SEG_LEN, 160},
+  { CRGB::White, MIDDLE_LED, SEG_LEN, 30},
+  { CRGB::Black, MIDDLE_LED, SEG_LEN, 160},
+  { CRGB::White, MIDDLE_LED, SEG_LEN, 30},
+  { CRGB::Black, MIDDLE_LED, SEG_LEN, 160},
+
+  { CRGB::Red, MIDDLE_LED, SEG_LEN, 320},
+
+  { 0, 0, 0, ANIMATION_END}
+};
+
+void cops(CRGB* frame) {
+  static frameIndex_t frameIndex = 0;
+  static millis_t frameTime = 0;
+  static const animationFrame* frames = copsAnimation;
+
+  bool drawFrame = false;
+
+  millis_t now = millis();
+  if (lastModeSwitch() > frameTime) {
+    // restart animation
+    frameTime = now;
+    frameIndex = 0;
+    drawFrame = true;
+  } else if (now > (frameTime + frames[frameIndex].delay )) {
+    frameIndex++;
+    frameTime = now;
+    drawFrame = true;
+  }
+
+  if (drawFrame) {
+    if (frames[frameIndex].delay < 0) {
+      frameIndex = 0;
+    }
+
+    fill_solid( &(frame[frames[frameIndex].offset]), frames[frameIndex].len, frames[frameIndex].color);
+
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void life(CRGB* frame) {
+  int count = 0;
+  static uint32_t lastDraw = 0;
+  uint32_t now = millis()/100;
+  if (now == lastDraw) {
+    return;
+  }
+
+  lastDraw = now;
+
+  static int iterations = 0;
+  for (int i = 0; i < num_leds; i++) {
+    if (frame[i]) { count++; }
+  };
+
+  int seed_width = 3;
+  if (count == 0 || iterations > 100) {
+    fill_solid( frame, num_leds, CRGB::Black);
+    for (int i = (LEDS_MIDPOINT - seed_width/2); i < (LEDS_MIDPOINT+seed_width/2); i++) {
+      if (random(2)) { frame[i] = CRGB::White; }
+    }
+    iterations = 0;
+  } else {
+    uint8_t rule = 110;
+    CRGB temp[num_leds];
+    for (int i = 1; i < num_leds-1; i++) {
+      uint8_t cur_pattern = (frame[i-1]!=(CRGB)CRGB::Black)*4 + (frame[i]!=(CRGB)CRGB::Black)*2 + (frame[i+1]!=(CRGB)CRGB::Black);
+      temp[i] = ((rule >> cur_pattern)&0x01) ? CRGB::White : CRGB::Black;
+    }
+    memmove( frame, temp, num_leds * sizeof( CRGB) );
+    iterations++;
+  }
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 int mode = FIRSTMODE;
 
@@ -228,6 +303,10 @@ void render(CRGB* frame, uint32_t time) {
       //console.debugf("ambient: %d\n", ambient);
       fill_solid( frame, num_leds, CRGB::Black);
       fill_solid( frame, num_leds * ambient / 1024, CRGB::Green);
+      break;
+
+    case COPS:
+      cops(frame);
       break;
 
     case LIFE:
@@ -311,8 +390,6 @@ void setLedMode(int newMode) {
   render(frames[nextFrame], nextFrameMillis);
   lastModeSwitchTime = millis();
 }
-
-uint32_t lastModeSwitch() { return lastModeSwitchTime; }
 
 void loopLeds() {
   nowMillis = millis();

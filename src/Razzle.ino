@@ -54,14 +54,15 @@ bool isRemote() {
 
 
 void setup() {
-  pinMode(BUILTIN_LED, OUTPUT);  // initialize onboard LED as output
-  digitalWrite(BUILTIN_LED, true);  // true = LED off
+  pinMode(LED_BUILTIN, OUTPUT);  // initialize onboard LED as output
+  digitalWrite(LED_BUILTIN, true);  // true = LED off
 
   delay(1000);
   setupLeds(getDevice().colorOrder, getDevice().numLeds);
 
   thing.begin(ssid, passphrase);
   thing.setHostname(getDevice().hostname);
+  Serial.println("setup");
 }
 
 uint32_t lastDown = 0;
