@@ -1,8 +1,15 @@
+#ifndef _RazzleLeds_
+#define _RazzleLeds_
+
 #include "FastLED.h"
+#include "WiFiConsole.h"
+
+typedef uint16_t led_t;
 
 enum modes {
   FIRSTMODE,
-  COPS = FIRSTMODE,
+  COLORS = FIRSTMODE,
+  COPS = COLORS,
   AMBIENT,
   FIRE,
   LIFE,
@@ -15,14 +22,30 @@ enum modes {
   NOISE,
   WHITENOISE,
   WHITE,
-  END,
-  OFF,
+  ENDCOLORS,
+
+  WHITES,
+  OFF = WHITES,
   ON,
+  HALF,
+  GREY80,
+  GREY40,
+  GREY20,
+  GREY10,
+
+  ENDWHITES,
+  LASTMODE = ENDWHITES,
 };
 
-void  setLedMode(int newmode);
-int   getLedMode();
+typedef uint16_t ledmode_t;
+
+void  setLedMode(ledmode_t newmode);
+ledmode_t   getLedMode();
 uint32_t lastModeSwitch();
 
-void  setupLeds(EOrder order, int led_count);
+void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax);
 void  loopLeds();
+
+extern WiFiConsole console;
+
+#endif

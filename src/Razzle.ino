@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <Switch.h>
-#include <Encoder.h>
 #include <WiFiThing.h>
 #include <Clock.h>
 
@@ -8,17 +7,27 @@
 #include "RazzleLeds.h"
 
 // needed by platformio
+#ifdef ESP8266
 #include "ESP8266WiFi.h"
+#endif
+#ifdef ESP32
+#include "WiFi.h"
+#endif
+
 #include "NTPClient.h"
 
+#include "RazzleCommands.h"
+#ifdef ESP8266
 #define BUTTON_PIN (D6)
+#endif
+
+#ifdef ESP32
+#define BUTTON_PIN (19)
+#endif
+
 Switch button = Switch(BUTTON_PIN);  // Switch between a digital pin and GND
 
 WiFiThing thing;
-
-#define ENCODER_A_PIN (D7)
-#define ENCODER_B_PIN (D8)
-Encoder knob(ENCODER_A_PIN,ENCODER_B_PIN);
 
 bool firstRun = true;
 bool recoverMode = false;
@@ -28,13 +37,16 @@ struct devInfo {
   const char* hostname;
   int numLeds;
   EOrder colorOrder;
+  uint32_t powerSupplyMilliAmps;
 };
 
 devInfo devices[] = {
-  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB },
-  { "5C:CF:7F:10:4C:43", "RazzleString", 50, RGB },
-  { "5C:CF:7F:16:E6:EC", "RazzleBox",    64, GRB },
-  { nullptr,             "RazzleUndef",   1, RGB }
+//  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB, 500 },
+  { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  600, GRB, 20000 },
+  { "30:AE:A4:39:12:AC", "Razzle32",     600, GRB, 5000 },
+  { "5C:CF:7F:10:4C:43", "RazzleString",  50, RGB, 2500 },
+  { "5C:CF:7F:16:E6:EC", "RazzleBox",     64, GRB, 1000 },
+  { nullptr,             "RazzleUndef",    1, RGB, 0 }
 };
 
 devInfo getDevice() {
@@ -58,11 +70,11 @@ void setup() {
   digitalWrite(LED_BUILTIN, true);  // true = LED off
 
   delay(1000);
-  setupLeds(getDevice().colorOrder, getDevice().numLeds);
+  setupLeds(getDevice().colorOrder, getDevice().numLeds, getDevice().powerSupplyMilliAmps);
 
-  thing.begin(ssid, passphrase);
   thing.setHostname(getDevice().hostname);
-  Serial.println("setup");
+  thing.begin(ssid, passphrase);
+  console.debugf("Welcome to %s\n", getDevice().hostname);
 }
 
 uint32_t lastDown = 0;
@@ -75,8 +87,10 @@ const uint32_t holdTime = 1000;
 
 void loop()
 {
+  static bool frameled = true;
   button.poll();
   thing.idle();
+  theFPSCommand.idled();
 
   if (firstRun && button.on()) {
     recoverMode = true;
@@ -89,40 +103,30 @@ void loop()
     // update display
     uint32_t nowMillis = millis();
 
-    if ((nowMillis - lastModeSwitch()) > autoSwitchInterval && getLedMode() < END) {
+    if ((nowMillis - lastModeSwitch()) > autoSwitchInterval && getLedMode() < ENDCOLORS) {
       setLedMode(getLedMode()+1);
-      if (getLedMode() >= END) {
-        setLedMode(FIRSTMODE);
+      if (getLedMode() >= ENDCOLORS) {
+        setLedMode(COLORS);
       }
       console.debugf("Autoswitch to mode %d\n", getLedMode());
     } else {
 
       if (button.longPress()) {
-        if (getLedMode() >= END) {
-           setLedMode(FIRSTMODE);
+        if (getLedMode() >= ENDCOLORS) {
+           setLedMode(COLORS);
         } else {
-           setLedMode(OFF);
+           setLedMode(WHITES);
         }
         console.debugf("Longpress, now mode: %d\n", getLedMode());
       }
       if (button.pushed()) {
         console.debugln("Button pushed");
-        switch (getLedMode()) {
-          case ON:
-            setLedMode(OFF);
-            console.debugln("Mode: Off");
-            break;
-          case OFF:
-            setLedMode(ON);
-            console.debugln("Mode: On");
-            break;
-          default:
-            setLedMode(getLedMode()+1);
-            if (getLedMode() >= END) {
-              setLedMode(FIRSTMODE);
-            }
-            console.printf("Mode: %d\n", getLedMode());
-        }
+        ledmode_t m = getLedMode();
+        m = m+1;
+        if (m == ENDCOLORS) { m = COLORS; };
+        if (m == ENDWHITES) { m = WHITES; }
+        setLedMode(m);
+        console.printf("Mode: %d\n", getLedMode());
       } else if (button.released()) {
         console.debugln("Button released");
         switch (getLedMode()) {
@@ -146,6 +150,12 @@ void loop()
     }
 
     loopLeds();
+
+    // toggle the built-in led
+    frameled = !frameled;
+    digitalWrite(LED_BUILTIN, frameled);
   }
   firstRun = false;
 }
+
+

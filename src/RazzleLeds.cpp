@@ -1,17 +1,19 @@
 #include "RazzleLeds.h"
 #include <colorutils.h>
-#include <WiFiConsole.h>
 #include <Clock.h>
+#include "RazzleCommands.h"
 
-extern WiFiConsole console;
-
+#ifdef ESP8266
 #define LED_DATA_PIN    (D2)
-#define CHIPSET         WS2811
-#define MAX_NUM_LEDS    (64)
+#else
+#define LED_DATA_PIN    (23)
+#endif
 
+#define CHIPSET         WS2811
 #define LIGHT_SENSOR    (A0)
 
-int num_leds;
+const led_t MAX_NUM_LEDS = 30*22;
+led_t num_leds;
 
 CRGB leds[MAX_NUM_LEDS];
 
@@ -30,7 +32,7 @@ uint32_t nowMillis = 0;
 uint32_t lastModeSwitchTime = 0;
 uint32_t lastModeSwitch() { return lastModeSwitchTime; }
 
-void  setupLeds(EOrder order, int led_count) {
+void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
 
   num_leds = led_count >  MAX_NUM_LEDS ?  MAX_NUM_LEDS : led_count;
 
@@ -45,6 +47,8 @@ void  setupLeds(EOrder order, int led_count) {
       console.debugln("ERROR: Bad color order");
   }
 
+  FastLED.setMaxPowerInVoltsAndMilliamps	( 5, milliAmpsMax);
+
   fill_solid(leds, num_leds, CRGB::Black);
   FastLED.show();
 }
@@ -56,7 +60,7 @@ void interpolateFrame() {
   if (fract8 == 0) {
     memmove(leds, frames[lastFrame], num_leds * sizeof(CRGB));
   } else {
-    for (uint8_t i = 0; i < num_leds; i++) {
+    for (uint16_t i = 0; i < num_leds; i++) {
       leds[i].r = lerp8by8( frames[lastFrame][i].r, frames[nextFrame][i].r, fract8 );
       leds[i].g = lerp8by8( frames[lastFrame][i].g, frames[nextFrame][i].g, fract8 );
       leds[i].b = lerp8by8( frames[lastFrame][i].b, frames[nextFrame][i].b, fract8 );
@@ -130,31 +134,31 @@ void Fire2012(CRGB* frame)
   static byte heat[NUM_SEGMENTS][MAX_NUM_LEDS/NUM_SEGMENTS];
 
   // Step 1.  Cool down every cell a little
-  for (int j = 0; j < NUM_SEGMENTS; j++) {
-    for ( int i = 0; i < LEDS_PER_SEGMENT; i++) {
+  for (led_t j = 0; j < NUM_SEGMENTS; j++) {
+    for ( led_t i = 0; i < LEDS_PER_SEGMENT; i++) {
       heat[j][i] = qsub8( heat[j][i],  random8(0, ((COOLING * 10) / num_leds) + 2));
     }
   }
 
   // Step 2.  Heat from each cell drifts 'up' and diffuses a little
-  for (int j = 0; j < NUM_SEGMENTS; j++) {
-    for ( int k = LEDS_PER_SEGMENT - 1; k >= 2; k--) {
+  for (led_t j = 0; j < NUM_SEGMENTS; j++) {
+    for ( led_t k = LEDS_PER_SEGMENT - 1; k >= 2; k--) {
       heat[j][k] = (heat[j][k - 1] + heat[j][k - 2] + heat[j][k - 2] ) / 3;
     }
   }
   // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
-  for (int j = 0; j < NUM_SEGMENTS; j++) {
+  for (led_t j = 0; j < NUM_SEGMENTS; j++) {
     if ( random8() < SPARKING ) {
-      int y = random8(7);
+      led_t y = random8(7);
       heat[j][y] = qadd8( heat[j][y], random8(SPARKHEATMIN, SPARKHEATMAX) );
     }
   }
 
   // Step 4.  Map from heat cells to LED colors
-  for (int s = 0; s < NUM_SEGMENTS; s++) {
-    for ( int j = 0; j < LEDS_PER_SEGMENT; j++) {
+  for (led_t s = 0; s < NUM_SEGMENTS; s++) {
+    for ( led_t j = 0; j < LEDS_PER_SEGMENT; j++) {
       CRGB color = HeatColor( heat[s][j]);
-      int pixelnumber;
+      led_t pixelnumber;
       if ( s % 2 ) {
         pixelnumber = (num_leds - 1) - j;
       } else {
@@ -248,21 +252,21 @@ void life(CRGB* frame) {
   lastDraw = now;
 
   static int iterations = 0;
-  for (int i = 0; i < num_leds; i++) {
+  for (led_t i = 0; i < num_leds; i++) {
     if (frame[i]) { count++; }
   };
 
-  int seed_width = 3;
+  led_t seed_width = 3;
   if (count == 0 || iterations > 100) {
     fill_solid( frame, num_leds, CRGB::Black);
-    for (int i = (LEDS_MIDPOINT - seed_width/2); i < (LEDS_MIDPOINT+seed_width/2); i++) {
+    for (led_t i = (LEDS_MIDPOINT - seed_width/2); i < (LEDS_MIDPOINT+seed_width/2); i++) {
       if (random(2)) { frame[i] = CRGB::White; }
     }
     iterations = 0;
   } else {
     uint8_t rule = 110;
     CRGB temp[num_leds];
-    for (int i = 1; i < num_leds-1; i++) {
+    for (led_t i = 1; i < num_leds-1; i++) {
       uint8_t cur_pattern = (frame[i-1]!=(CRGB)CRGB::Black)*4 + (frame[i]!=(CRGB)CRGB::Black)*2 + (frame[i+1]!=(CRGB)CRGB::Black);
       temp[i] = ((rule >> cur_pattern)&0x01) ? CRGB::White : CRGB::Black;
     }
@@ -273,9 +277,9 @@ void life(CRGB* frame) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int mode = FIRSTMODE;
+ledmode_t mode = COLORS;
 
-int   getLedMode() { return mode;};
+ledmode_t   getLedMode() { return mode;};
 
 uint32_t white(uint8_t y) {
   uint32_t y32 = y;
@@ -316,7 +320,7 @@ void render(CRGB* frame, uint32_t time) {
 
     case WAVE:
       static uint16_t waveoff = 0;
-      for (int i = 0; i < num_leds; i++) {
+      for (led_t i = 0; i < num_leds; i++) {
         uint8_t y = (sin16(((int32_t)i * 65536) / num_leds + waveoff) + 32767) >> 8;
         frame[i] = white(y);
       }
@@ -338,7 +342,7 @@ void render(CRGB* frame, uint32_t time) {
       break;
 
     case ZIP:
-      static int zipper = 0;
+      static led_t zipper = 0;
       zipper = zipper % num_leds;
       fill_solid( frame, num_leds, CRGB::Black);
       frame[zipper++] = CRGB::White;
@@ -354,7 +358,7 @@ void render(CRGB* frame, uint32_t time) {
       break;
 
     case WHITENOISE:
-      for (int i = 0; i < num_leds; i++) {
+      for (led_t i = 0; i < num_leds; i++) {
         uint8_t y = random(256);
         frame[i] = white(y);
       }
@@ -365,19 +369,38 @@ void render(CRGB* frame, uint32_t time) {
       frame[random(num_leds)] = random(0x00ffffff);
       break;
 
+    case OFF:
+      fill_solid(frame, num_leds, CRGB::Black);
+      break;
+
     case WHITE:
     case ON:
       fill_solid(frame, num_leds, CRGB::White);
       break;
 
-    case OFF:
-      fill_solid(frame, num_leds, CRGB::Black);
+    case HALF:
+      fill_solid(frame, num_leds/2, CRGB::White);
       break;
+
+    case GREY80:
+      fill_solid(frame, num_leds, 0x808080);
+      break;
+    case GREY40:
+      fill_solid(frame, num_leds, 0x404040);
+      break;
+    case GREY20:
+      fill_solid(frame, num_leds, 0x202020);
+      break;
+    case GREY10:
+      fill_solid(frame, num_leds, 0x101010);
+      break;
+
   }
 
 }
 
-void setLedMode(int newMode) {
+void setLedMode(ledmode_t newMode) {
+  if (mode < 0 || mode > LASTMODE) return;
   mode = newMode;
   lastFrame = 0;
   lastFrameMillis = nowMillis;
@@ -406,4 +429,5 @@ void loopLeds() {
 
   interpolateFrame();
   FastLED.show();
+  theFPSCommand.newFrame();
 }
