@@ -10,7 +10,7 @@ enum modes {
   FIRSTMODE,
   COLORS = FIRSTMODE,
   COPS = COLORS,
-  AMBIENT,
+//  AMBIENT,
   FIRE,
   LIFE,
   BREATHING,

@@ -5,6 +5,7 @@
 
 #include "Credentials.h"
 #include "RazzleLeds.h"
+#include "Razzle.h"
 
 // needed by platformio
 #ifdef ESP8266
@@ -31,6 +32,7 @@ WiFiThing thing;
 
 bool firstRun = true;
 bool recoverMode = false;
+
 
 struct devInfo {
   const char* mac;
@@ -64,17 +66,22 @@ bool isRemote() {
   return getDevice().numLeds == 1;
 }
 
+void recover() {
+  console.debugln("Runtime Error, entering recovery mode");
+  recoverMode = true;
+}
 
 void setup() {
   pinMode(LED_BUILTIN, OUTPUT);  // initialize onboard LED as output
   digitalWrite(LED_BUILTIN, true);  // true = LED off
 
   delay(1000);
-  setupLeds(getDevice().colorOrder, getDevice().numLeds, getDevice().powerSupplyMilliAmps);
 
   thing.setHostname(getDevice().hostname);
   thing.begin(ssid, passphrase);
   console.debugf("Welcome to %s\n", getDevice().hostname);
+
+  setupLeds(getDevice().colorOrder, getDevice().numLeds, getDevice().powerSupplyMilliAmps);
 }
 
 uint32_t lastDown = 0;
@@ -94,7 +101,7 @@ void loop()
 
   if (firstRun && button.on()) {
     recoverMode = true;
-    console.debugln("RECOVER MODE");
+    console.debugln("BUTTON DOWN: RECOVER MODE");
   }
 
   if (recoverMode) {

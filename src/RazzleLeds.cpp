@@ -2,7 +2,7 @@
 #include <colorutils.h>
 #include <Clock.h>
 #include "RazzleCommands.h"
-
+#include "Razzle.h"
 #ifdef ESP8266
 #define LED_DATA_PIN    (D2)
 #else
@@ -12,12 +12,12 @@
 #define CHIPSET         WS2811
 #define LIGHT_SENSOR    (A0)
 
-const led_t MAX_NUM_LEDS = 30*22;
 led_t num_leds;
 
-CRGB leds[MAX_NUM_LEDS];
+CRGB* leds;
 
-CRGB frames[2][MAX_NUM_LEDS];
+CRGB* frames[2];
+
 uint32_t lastFrameMillis = 0;
 uint8_t nextFrame = 1;
 
@@ -34,7 +34,16 @@ uint32_t lastModeSwitch() { return lastModeSwitchTime; }
 
 void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
 
-  num_leds = led_count >  MAX_NUM_LEDS ?  MAX_NUM_LEDS : led_count;
+  num_leds = led_count;
+
+  leds = new CRGB[led_count];
+  frames[0] = new CRGB[led_count];
+  frames[1] = new CRGB[led_count];
+
+  if (!leds || !frames[0] || !frames[1]) {
+    recover();
+    return;
+  }
 
   switch (order) {
     case RGB:
@@ -124,40 +133,44 @@ void breathing(CRGB* frame) {
 #define LEDS_PER_SEGMENT (num_leds/NUM_SEGMENTS)
 #define LEDS_MIDPOINT (num_leds/2)
 
-#define LEDS_RIGHT (0)
-#define LEDS_TOP (LEDS_MIDPOINT-6)
-#define LEDS_LEFT (LEDS_MIDPOINT+6)
-
 void Fire2012(CRGB* frame)
 {
   // Array of temperature readings at each simulation cell
-  static byte heat[NUM_SEGMENTS][MAX_NUM_LEDS/NUM_SEGMENTS];
+  static byte* heat = 0;
+
+  if (heat == 0) {
+    heat = new byte[num_leds];
+  }
 
   // Step 1.  Cool down every cell a little
   for (led_t j = 0; j < NUM_SEGMENTS; j++) {
     for ( led_t i = 0; i < LEDS_PER_SEGMENT; i++) {
-      heat[j][i] = qsub8( heat[j][i],  random8(0, ((COOLING * 10) / num_leds) + 2));
+      led_t offset = j*NUM_SEGMENTS + i;
+      heat[offset] = qsub8( heat[offset],  random8(0, ((COOLING * 10) / num_leds) + 2));
     }
   }
 
   // Step 2.  Heat from each cell drifts 'up' and diffuses a little
   for (led_t j = 0; j < NUM_SEGMENTS; j++) {
     for ( led_t k = LEDS_PER_SEGMENT - 1; k >= 2; k--) {
-      heat[j][k] = (heat[j][k - 1] + heat[j][k - 2] + heat[j][k - 2] ) / 3;
+      led_t offset = j*NUM_SEGMENTS + k;
+      heat[offset] = (heat[offset - 1] + heat[offset - 2] + heat[offset - 2] ) / 3;
     }
   }
   // Step 3.  Randomly ignite new 'sparks' of heat near the bottom
   for (led_t j = 0; j < NUM_SEGMENTS; j++) {
     if ( random8() < SPARKING ) {
       led_t y = random8(7);
-      heat[j][y] = qadd8( heat[j][y], random8(SPARKHEATMIN, SPARKHEATMAX) );
+      led_t offset = j*NUM_SEGMENTS + y;
+      heat[offset] = qadd8( heat[offset], random8(SPARKHEATMIN, SPARKHEATMAX) );
     }
   }
 
   // Step 4.  Map from heat cells to LED colors
   for (led_t s = 0; s < NUM_SEGMENTS; s++) {
     for ( led_t j = 0; j < LEDS_PER_SEGMENT; j++) {
-      CRGB color = HeatColor( heat[s][j]);
+      led_t offset = s*NUM_SEGMENTS + j;
+      CRGB color = HeatColor( heat[offset]);
       led_t pixelnumber;
       if ( s % 2 ) {
         pixelnumber = (num_leds - 1) - j;
@@ -213,7 +226,7 @@ const animationFrame copsAnimation[] = {
 void cops(CRGB* frame) {
   static frameIndex_t frameIndex = 0;
   static millis_t frameTime = 0;
-  static const animationFrame* frames = copsAnimation;
+  static const animationFrame* animationFrames = copsAnimation;
 
   bool drawFrame = false;
 
@@ -223,18 +236,18 @@ void cops(CRGB* frame) {
     frameTime = now;
     frameIndex = 0;
     drawFrame = true;
-  } else if (now > (frameTime + frames[frameIndex].delay )) {
+  } else if (now > (frameTime + animationFrames[frameIndex].delay )) {
     frameIndex++;
     frameTime = now;
     drawFrame = true;
   }
 
   if (drawFrame) {
-    if (frames[frameIndex].delay < 0) {
+    if (animationFrames[frameIndex].delay < 0) {
       frameIndex = 0;
     }
 
-    fill_solid( &(frame[frames[frameIndex].offset]), frames[frameIndex].len, frames[frameIndex].color);
+    fill_solid( &(frame[animationFrames[frameIndex].offset]), animationFrames[frameIndex].len, animationFrames[frameIndex].color);
 
   }
 }
@@ -297,10 +310,10 @@ void render(CRGB* frame, uint32_t time) {
 
   fps(1000);  // as fast as possible
 
-  uint32_t ambient;
   switch (mode) {
-
+/*
     case AMBIENT:
+      uint32_t ambient;
       fps(3);
       ambient = analogRead(LIGHT_SENSOR);
 //      ambient = ambient*ambient/1024;
@@ -308,7 +321,7 @@ void render(CRGB* frame, uint32_t time) {
       fill_solid( frame, num_leds, CRGB::Black);
       fill_solid( frame, num_leds * ambient / 1024, CRGB::Green);
       break;
-
+*/
     case COPS:
       cops(frame);
       break;
