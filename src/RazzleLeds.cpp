@@ -407,6 +407,18 @@ void render(CRGB* frame, uint32_t time) {
     case GREY10:
       fill_solid(frame, num_leds, 0x101010);
       break;
+    case GREY08:
+      fill_solid(frame, num_leds, 0x080808);
+      break;
+    case GREY04:
+      fill_solid(frame, num_leds, 0x040404);
+      break;
+    case GREY02:
+      fill_solid(frame, num_leds, 0x020202);
+      break;
+    case GREY01:
+      fill_solid(frame, num_leds, 0x010101);
+      break;
 
   }
 

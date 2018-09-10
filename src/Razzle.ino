@@ -44,7 +44,7 @@ struct devInfo {
 
 devInfo devices[] = {
 //  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB, 500 },
-  { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  600, GRB, 20000 },
+  { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  600, GRB, 9000 },
   { "30:AE:A4:39:12:AC", "Razzle32",     600, GRB, 5000 },
   { "5C:CF:7F:10:4C:43", "RazzleString",  50, RGB, 2500 },
   { "5C:CF:7F:16:E6:EC", "RazzleBox",     64, GRB, 1000 },
