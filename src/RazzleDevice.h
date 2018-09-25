@@ -1,0 +1,39 @@
+#ifndef _RazzleDevice_
+#define _RazzleDevice_
+#include "Razzle.h"
+
+struct devInfo {
+  const char* mac;
+  const char* hostname;
+  int numLeds;
+  EOrder colorOrder;
+  uint32_t powerSupplyMilliAmps;
+};
+
+devInfo devices[] = {
+//  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB, 500 },
+  { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  60, GRB, 2000 },
+//  { "80:7D:3A:47:6B:02", "PeggyLoo",   22*30, GRB, 10000 },
+  { "B4:E6:2D:89:0D:C9", "MiniLoo",   12*16, GRB, 2400*2 },
+  { "30:AE:A4:39:12:AC", "PeggyLoo",     22*30, GRB, 9000 },
+  { "5C:CF:7F:10:4C:43", "RazzleString",  50, RGB, 2500 },
+  { "5C:CF:7F:16:E6:EC", "RazzleBox",     64, GRB, 1000 },
+  { nullptr,             "RazzleUndef",    1, RGB, 0 }
+};
+
+devInfo getDevice() {
+  int i = 0;
+  do {
+    if (strcasecmp(devices[i].mac, thing.getMacAddress().c_str()) == 0) {
+      return devices[i];
+    }
+    i++;
+  } while ( devices[i].mac != nullptr );
+  return devices[i];  // the unmatched default is returned
+}
+
+bool isRemote() {
+  return getDevice().numLeds == 1;
+}
+
+#endif
