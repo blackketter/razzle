@@ -31,6 +31,7 @@ inline void fps(uint32_t f)  { frameIntervalMillis = 1000/f; };
 uint32_t nowMillis = 0;
 uint32_t lastModeSwitchTime = 0;
 uint32_t lastModeSwitch() { return lastModeSwitchTime; }
+uint8_t globalBrightness = 10;
 
 void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
 
@@ -39,6 +40,9 @@ void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
   leds = new CRGB[led_count];
   frames[0] = new CRGB[led_count];
   frames[1] = new CRGB[led_count];
+  fill_solid(leds, num_leds, CRGB::Black);
+  fill_solid(frames[0], num_leds, CRGB::Black);
+  fill_solid(frames[1], num_leds, CRGB::Black);
 
   if (!leds || !frames[0] || !frames[1]) {
     recover();
@@ -57,9 +61,12 @@ void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
   }
 
   FastLED.setMaxPowerInVoltsAndMilliamps	( 5, milliAmpsMax);
-
-  fill_solid(leds, num_leds, CRGB::Black);
-  FastLED.show();
+  if (num_leds > 100) {
+    FastLED.setDither( 0 );
+  }
+  FastLED.setCorrection(UncorrectedColor);
+  FastLED.setTemperature(UncorrectedTemperature);
+  FastLED.show(globalBrightness);
 }
 
 
@@ -79,7 +86,7 @@ void interpolateFrame() {
 
 void breathing(CRGB* frame) {
 
-  uint32_t brightness = sin16((millis()*5)%65536); // approx 13s cycle time
+  uint32_t brightness = sin16((millis()*10)%65536)+32768; // approx 13s cycle time
   uint8_t scaled = (brightness * brightness)/(65536L*256);
 
   CRGB c;
@@ -453,6 +460,6 @@ void loopLeds() {
   }
 
   interpolateFrame();
-  FastLED.show();
+  FastLED.show(globalBrightness);
   theFPSCommand.newFrame();
 }

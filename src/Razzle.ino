@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include <Switch.h>
-#include <WiFiThing.h>
 #include <Clock.h>
 
 #include "Credentials.h"
@@ -18,53 +17,30 @@
 #include "NTPClient.h"
 
 #include "RazzleCommands.h"
-#ifdef ESP8266
+#include "RazzleDevice.h"
+
+#if defined(ESP8266)
 #define BUTTON_PIN (D6)
+#define BUTTON_POLARITY (LOW)
+#define BUTTON_INPUT (INPUT_PULLUP)
+#define RADAR_PIN (D5)
 #endif
 
-#ifdef ESP32
-#define BUTTON_PIN (19)
+#if defined(ESP32)
+#define BUTTON_PIN (22)
+#define BUTTON_POLARITY (HIGH)
+#define BUTTON_INPUT (INPUT_PULLDOWN)
+#define RADAR_PIN (25)
 #endif
 
-Switch button = Switch(BUTTON_PIN);  // Switch between a digital pin and GND
+Switch button = Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY);  // Switch between a digital pin and GND
 
 WiFiThing thing;
 
 bool firstRun = true;
 bool recoverMode = false;
 
-
-struct devInfo {
-  const char* mac;
-  const char* hostname;
-  int numLeds;
-  EOrder colorOrder;
-  uint32_t powerSupplyMilliAmps;
-};
-
-devInfo devices[] = {
-//  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB, 500 },
-  { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  600, GRB, 9000 },
-  { "30:AE:A4:39:12:AC", "Razzle32",     600, GRB, 5000 },
-  { "5C:CF:7F:10:4C:43", "RazzleString",  50, RGB, 2500 },
-  { "5C:CF:7F:16:E6:EC", "RazzleBox",     64, GRB, 1000 },
-  { nullptr,             "RazzleUndef",    1, RGB, 0 }
-};
-
-devInfo getDevice() {
-  int i = 0;
-  do {
-    if (strcasecmp(devices[i].mac, thing.getMacAddress().c_str()) == 0) {
-      return devices[i];
-    }
-    i++;
-  } while ( devices[i].mac != nullptr );
-  return devices[i];  // the unmatched default is returned
-}
-
-bool isRemote() {
-  return getDevice().numLeds == 1;
-}
+bool lastRadar = false;
 
 void recover() {
   console.debugln("Runtime Error, entering recovery mode");
@@ -75,12 +51,19 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);  // initialize onboard LED as output
   digitalWrite(LED_BUILTIN, true);  // true = LED off
 
+  pinMode(RADAR_PIN, INPUT);
+
   delay(1000);
 
+  thing.setTimezone(&usPT);
   thing.setHostname(getDevice().hostname);
+
   thing.begin(ssid, passphrase);
   console.debugf("Welcome to %s\n", getDevice().hostname);
 
+  console.debugf("LED is on pin %d\n",LED_BUILTIN);
+
+  globalBrightness = getDevice().defaultBrightness;
   setupLeds(getDevice().colorOrder, getDevice().numLeds, getDevice().powerSupplyMilliAmps);
 }
 
@@ -127,7 +110,7 @@ void loop()
         console.debugf("Longpress, now mode: %d\n", getLedMode());
       }
       if (button.pushed()) {
-        console.debugln("Button pushed");
+//        console.debugln("Button pushed");
         ledmode_t m = getLedMode();
         m = m+1;
         if (m == ENDCOLORS) { m = COLORS; };
@@ -135,7 +118,7 @@ void loop()
         setLedMode(m);
         console.printf("Mode: %d\n", getLedMode());
       } else if (button.released()) {
-        console.debugln("Button released");
+//        console.debugln("Button released");
         switch (getLedMode()) {
           case OFF:
             console.debugln("Mode: Off");
@@ -161,6 +144,13 @@ void loop()
     // toggle the built-in led
     frameled = !frameled;
     digitalWrite(LED_BUILTIN, frameled);
+
+    bool radar = digitalRead(RADAR_PIN);
+    if (lastRadar != radar) {
+      lastRadar = radar;
+      console.debugf("Radar: %s\n", radar ? "ON" : "OFF");
+    }
+
   }
   firstRun = false;
 }

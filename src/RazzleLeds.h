@@ -1,6 +1,7 @@
 #ifndef _RazzleLeds_
 #define _RazzleLeds_
 
+#define FASTLED_ALLOW_INTERRUPTS 0
 #include "FastLED.h"
 #include "WiFiConsole.h"
 
@@ -52,4 +53,6 @@ void  loopLeds();
 
 extern WiFiConsole console;
 
+
+extern uint8_t globalBrightness;
 #endif

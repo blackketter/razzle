@@ -8,18 +8,22 @@ struct devInfo {
   int numLeds;
   EOrder colorOrder;
   uint32_t powerSupplyMilliAmps;
+  uint8_t defaultBrightness;
 };
 
 devInfo devices[] = {
-//  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB, 500 },
-  { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  60, GRB, 2000 },
-//  { "80:7D:3A:47:6B:02", "PeggyLoo",   22*30, GRB, 10000 },
-  { "B4:E6:2D:89:0D:C9", "MiniLoo",   12*16, GRB, 2400*2 },
-  { "30:AE:A4:39:12:AC", "PeggyLoo",     22*30, GRB, 9000 },
-  { "5C:CF:7F:10:4C:43", "RazzleString",  50, RGB, 2500 },
-  { "5C:CF:7F:16:E6:EC", "RazzleBox",     64, GRB, 1000 },
-  { nullptr,             "RazzleUndef",    1, RGB, 0 }
+
+//  { "5C:CF:7F:C3:AD:F8", "RazzleButton",  1, RGB, 500, 10 },
+  { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  60, GRB, 2000, 10 },
+  { "B4:E6:2D:89:0D:C9", "MiniLoo",   12*16, GRB, 2400, 10 },
+  { "30:AE:A4:39:12:AC", "PeggyLoo",     22*30, GRB, 9000, 10 },
+  { "80:7D:3A:47:68:4D", "RazzleString",  50, RGB, 500, 255 },
+  { "5C:CF:7F:16:E6:EC", "RazzleBox",     64, GRB, 1000, 10 },
+  { nullptr,             "RazzleUndef",    1, RGB, 0, 10 }
 };
+
+// other devices
+// 5C:CF:7F:10:4C:43 - Wemos D1 (full size)
 
 devInfo getDevice() {
   int i = 0;

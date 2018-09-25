@@ -17,8 +17,17 @@ class LEDModeCommand : public Command {
     }
 };
 
-extern LEDModeCommand theLEDModeCommand;
-
+class BrightnessCommand : public Command {
+  public:
+    const char* getName() { return "bright"; }
+    const char* getHelp() { return ("set global LED brightness"); }
+    void execute(Stream* c, uint8_t paramCount, char** params) {
+      if (paramCount == 1) {
+        globalBrightness = atoi(params[1]);
+      }
+      c->printf("LED Brightness: %d\n", globalBrightness);
+    }
+};
 
 class FPSCommand : public Command {
   public:
@@ -64,5 +73,23 @@ class FPSCommand : public Command {
 };
 
 extern FPSCommand theFPSCommand;
+
+extern bool recoverMode;
+
+class RecoverCommand : public Command {
+  public:
+    const char* getName() { return "recover"; }
+    const char* getHelp() { return "(1|0|) set or toggle recover mode"; }
+    void execute(Stream* c, uint8_t paramCount, char** params) {
+      if (paramCount == 1) {
+        recoverMode = atoi(params[1]);
+      } else {
+        recoverMode = !recoverMode;
+      }
+      c->printf("Recover Mode: %s\n", recoverMode ? "on" : "off");
+    }
+  private:
+};
+
 
 #endif
