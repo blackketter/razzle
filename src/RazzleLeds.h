@@ -22,7 +22,7 @@ enum modes {
   RAINBOWROTATE,
   NOISE,
   WHITENOISE,
-  WHITE,
+//  WHITE,
   ENDCOLORS,
 
   WHITES,
@@ -48,11 +48,23 @@ void  setLedMode(ledmode_t newmode);
 ledmode_t   getLedMode();
 uint32_t lastModeSwitch();
 
+
+uint8_t getBrightness();  // depends on whether it's day or night
+uint8_t getNightBrightness();
+uint8_t getDayBrightness();
+void setBrightness(uint8_t day, uint8_t night);
+
+bool isDay();
+
+
+
+
 void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax);
 void  loopLeds();
 
 extern WiFiConsole console;
 
 
-extern uint8_t globalBrightness;
+
+
 #endif

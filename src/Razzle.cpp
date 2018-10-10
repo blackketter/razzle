@@ -19,6 +19,9 @@
 #include "RazzleCommands.h"
 #include "RazzleDevice.h"
 
+#include "sunMoon.h"
+#include "TimeLord.h"
+
 #if defined(ESP8266)
 #define BUTTON_PIN (D6)
 #define BUTTON_POLARITY (LOW)
@@ -37,6 +40,64 @@ Switch button = Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY);  // Switch be
 
 WiFiThing thing;
 
+Clock dayClock(&usPT);
+bool isDay() {
+
+  uint8_t hour = dayClock.hour();
+  return dayClock.hasBeenSet() && (hour >= 8) && (hour < 20);  // daytime is 8 to 8.  if the clock hasn't been set, it's night for safety
+}
+
+sunMoon  sm;
+Clock gmtClock;
+#define OUR_latitude    -122.4438               // San Francisco cordinates
+#define OUR_longtitude    37.7619
+#define OUR_timezone    0 // -(8*60)                     // localtime with UTC difference in minutes
+
+bool isSolarDay() {
+  bool isDay = false;
+  time_t nowUTC = gmtClock.now();
+  time_t sRise = sm.sunRise(nowUTC);
+  time_t sSet  = sm.sunSet(nowUTC);
+  console.debugf("now:%d rise:%d set:%d\n", nowUTC,sRise,sSet);
+
+  if (nowUTC > sRise && nowUTC < sSet) {
+    console.debugln("Day!");
+    isDay = true;
+  } else {
+    isDay = false;
+    console.debugln("Night!");
+  }
+
+  TimeLord tardis;
+  tardis.TimeZone(-8 * 60); // tell TimeLord what timezone your RTC is synchronized to. You can ignore DST
+
+  // as long as the RTC never changes back and forth between DST and non-DST
+
+  tardis.Position(OUR_latitude, OUR_longtitude); // tell TimeLord where in the world we are
+
+  uint8_t todays[] = { 0, 0, 12, 27, 9, 18 }; // store today's date (at noon) in an array for TimeLord to use
+
+if (tardis.SunRise(todays)) {// if the sun will rise today (it might not, in the [ant]arctic)
+   {
+   console.print("Sunrise: ");
+   console.print((int) todays[tl_hour]);
+   console.print(":");
+   console.println((int) todays[tl_minute]);
+   }
+
+   if (tardis.SunSet(todays)) // if the sun will set todays (it might not, in the [ant]arctic)
+   {
+   console.print("Sunset: ");
+   console.print((int) todays[tl_hour]);
+   console.print(":");
+   console.println((int) todays[tl_minute]);
+   }
+   console.println();
+  }
+
+  return isDay;
+}
+
 bool firstRun = true;
 bool recoverMode = false;
 
@@ -48,6 +109,10 @@ void recover() {
 }
 
 void setup() {
+  sm.init(OUR_timezone, OUR_latitude, OUR_longtitude);
+
+  gmtClock.setZone(&UTC);
+
   pinMode(LED_BUILTIN, OUTPUT);  // initialize onboard LED as output
   digitalWrite(LED_BUILTIN, true);  // true = LED off
 
@@ -63,7 +128,7 @@ void setup() {
 
   console.debugf("LED is on pin %d\n",LED_BUILTIN);
 
-  globalBrightness = getDevice().defaultBrightness;
+  setBrightness(getDevice().defaultDayBrightness, getDevice().defaultNightBrightness);
   setupLeds(getDevice().colorOrder, getDevice().numLeds, getDevice().powerSupplyMilliAmps);
 }
 
@@ -140,6 +205,13 @@ void loop()
     }
 
     loopLeds();
+
+    // once a second
+    static time_t lastSec = 0;
+    time_t sec = gmtClock.now();
+    if (sec != lastSec) {
+      lastSec = sec;
+    }
 
     // toggle the built-in led
     frameled = !frameled;

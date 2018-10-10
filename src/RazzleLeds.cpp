@@ -31,7 +31,14 @@ inline void fps(uint32_t f)  { frameIntervalMillis = 1000/f; };
 uint32_t nowMillis = 0;
 uint32_t lastModeSwitchTime = 0;
 uint32_t lastModeSwitch() { return lastModeSwitchTime; }
-uint8_t globalBrightness = 10;
+
+uint8_t dayBrightness = 128;
+uint8_t nightBrightness = 10;
+uint8_t getBrightness() { return isDay() ? dayBrightness : nightBrightness; }
+uint8_t getNightBrightness() { return nightBrightness; }
+uint8_t getDayBrightness() { return dayBrightness; }
+void setBrightness(uint8_t day, uint8_t night) { dayBrightness = day; nightBrightness = night; }
+
 
 void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
 
@@ -66,7 +73,7 @@ void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
   }
   FastLED.setCorrection(UncorrectedColor);
   FastLED.setTemperature(UncorrectedTemperature);
-  FastLED.show(globalBrightness);
+  FastLED.show(getBrightness());
 }
 
 
@@ -393,7 +400,7 @@ void render(CRGB* frame, uint32_t time) {
       fill_solid(frame, num_leds, CRGB::Black);
       break;
 
-    case WHITE:
+//    case WHITE:
     case ON:
       fill_solid(frame, num_leds, CRGB::White);
       break;
@@ -460,6 +467,6 @@ void loopLeds() {
   }
 
   interpolateFrame();
-  FastLED.show(globalBrightness);
+  FastLED.show(getBrightness());
   theFPSCommand.newFrame();
 }

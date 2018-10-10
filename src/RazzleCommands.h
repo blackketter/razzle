@@ -22,10 +22,15 @@ class BrightnessCommand : public Command {
     const char* getName() { return "bright"; }
     const char* getHelp() { return ("set global LED brightness"); }
     void execute(Stream* c, uint8_t paramCount, char** params) {
+
       if (paramCount == 1) {
-        globalBrightness = atoi(params[1]);
+        uint8_t b = atoi(params[1]);
+        setBrightness(b,b);
+      } else if (paramCount == 2) {
+        setBrightness(atoi(params[1]),atoi(params[2]));
       }
-      c->printf("LED Brightness: %d\n", globalBrightness);
+
+      c->printf("LED Brightness: day: %d, night: %d (It's %s!)\n", getDayBrightness(), getNightBrightness(), isDay() ? "day" : "night");
     }
 };
 
