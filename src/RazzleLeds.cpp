@@ -3,6 +3,10 @@
 #include <Clock.h>
 #include "RazzleCommands.h"
 #include "Razzle.h"
+
+#include "Commands/FPSCommand.h"
+FPSCommand theFPSCommand;
+
 #ifdef ESP8266
 #define LED_DATA_PIN    (D2)
 #else

@@ -2,6 +2,7 @@
 #include <Switch.h>
 #include <Clock.h>
 
+#include "Console.h"
 #include "Credentials.h"
 #include "RazzleLeds.h"
 #include "Razzle.h"
@@ -18,6 +19,7 @@
 
 #include "RazzleCommands.h"
 #include "RazzleDevice.h"
+
 
 #include "sunMoon.h"
 #include "TimeLord.h"
@@ -145,7 +147,6 @@ void loop()
   static bool frameled = true;
   button.poll();
   thing.idle();
-  theFPSCommand.idled();
 
   if (firstRun && button.on()) {
     recoverMode = true;
