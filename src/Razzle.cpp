@@ -28,17 +28,55 @@
 #define BUTTON_PIN (D6)
 #define BUTTON_POLARITY (LOW)
 #define BUTTON_INPUT (INPUT_PULLUP)
-#define RADAR_PIN (D5)
+//#define RADAR_PIN (D5)
 #endif
 
 #if defined(ESP32)
 #define BUTTON_PIN (22)
 #define BUTTON_POLARITY (HIGH)
 #define BUTTON_INPUT (INPUT_PULLDOWN)
-#define RADAR_PIN (25)
+//#define RADAR_PIN (25)
 #endif
 
-Switch button = Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY);  // Switch between a digital pin and GND
+
+const char* colorModes[] =
+{
+  "Cops",
+  "Fire",
+  "Life",
+  "Breathing",
+  "Wave",
+  "Flashes",
+  "Zipper",
+  "RainbowRotate",
+  "Noise",
+  "WhiteNoise",
+  nullptr
+};
+
+const char* solidModes[] =
+{
+  "Off",
+  "On",
+  "Grey80",
+  "Grey40",
+  "Grey20",
+  "Grey10",
+  "Grey08",
+  "Grey04",
+  "Grey02",
+  "Grey01",
+  nullptr
+};
+
+const char** modeSets[] =
+{
+  colorModes,
+  solidModes,
+  nullptr
+};
+
+Switch button = Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY, 50, 1000);  // Switch between a digital pin and GND
 
 WiFiThing thing;
 
@@ -102,8 +140,17 @@ if (tardis.SunRise(todays)) {// if the sun will rise today (it might not, in the
 
 bool firstRun = true;
 bool recoverMode = false;
+uint32_t lastDown = 0;
+uint32_t lastUp = 1;
+bool pressed;
+bool released;
 
-bool lastRadar = false;
+uint32_t autoSwitchInterval = 1000L * 5 * 60;
+const uint32_t holdTime = 1000;
+int modeIndex = 0;
+int modeSetIndex = 0;
+
+//bool lastRadar = false;
 
 void recover() {
   console.debugln("Runtime Error, entering recovery mode");
@@ -118,7 +165,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);  // initialize onboard LED as output
   digitalWrite(LED_BUILTIN, true);  // true = LED off
 
-  pinMode(RADAR_PIN, INPUT);
+//  pinMode(RADAR_PIN, INPUT);
 
   delay(1000);
 
@@ -131,16 +178,9 @@ void setup() {
   console.debugf("LED is on pin %d\n",LED_BUILTIN);
 
   setBrightness(getDevice().defaultDayBrightness, getDevice().defaultNightBrightness);
-  setupLeds(getDevice().colorOrder, getDevice().numLeds, getDevice().powerSupplyMilliAmps);
+  setupLeds(getDevice().colorOrder, numPixels(), getDevice().powerSupplyMilliAmps);
+  setLedMode(modeSets[modeSetIndex][modeIndex]);
 }
-
-uint32_t lastDown = 0;
-uint32_t lastUp = 1;
-bool pressed;
-bool released;
-
-uint32_t autoSwitchInterval = 1000L * 5 * 60;
-const uint32_t holdTime = 1000;
 
 void loop()
 {
@@ -159,32 +199,32 @@ void loop()
     // update display
     uint32_t nowMillis = millis();
 
-    if ((nowMillis - lastModeSwitch()) > autoSwitchInterval && getLedMode() < ENDCOLORS) {
-      setLedMode(getLedMode()+1);
-      if (getLedMode() >= ENDCOLORS) {
-        setLedMode(COLORS);
+    if (modeSetIndex == 0 && (nowMillis - lastModeSwitch()) > autoSwitchInterval) {
+      modeIndex++;
+      if (modeSets[modeSetIndex][modeIndex] == nullptr) {
+        modeIndex = 0;
       }
-      console.debugf("Autoswitch to mode %d\n", getLedMode());
+      setLedMode(modeSets[modeSetIndex][modeIndex]);
+      console.debugf("Autoswitch to mode %s\n", modeSets[modeSetIndex][modeIndex]);
     } else {
-
       if (button.longPress()) {
-        if (getLedMode() >= ENDCOLORS) {
-           setLedMode(COLORS);
-        } else {
-           setLedMode(WHITES);
+        modeIndex = 0;
+        modeSetIndex++;
+        if (modeSets[modeSetIndex] == nullptr) {
+          modeSetIndex = 0;
         }
-        console.debugf("Longpress, now mode: %d\n", getLedMode());
+        setLedMode(modeSets[modeSetIndex][modeIndex]);
+        console.debugf("Long press, now mode: %s\n", modeSets[modeSetIndex][modeIndex]);
       }
       if (button.pushed()) {
-//        console.debugln("Button pushed");
-        ledmode_t m = getLedMode();
-        m = m+1;
-        if (m == ENDCOLORS) { m = COLORS; };
-        if (m == ENDWHITES) { m = WHITES; }
-        setLedMode(m);
-        console.printf("Mode: %d\n", getLedMode());
+        modeIndex++;
+        if (modeSets[modeSetIndex][modeIndex] == nullptr) {
+          modeIndex = 0;
+        }
+        setLedMode(modeSets[modeSetIndex][modeIndex]);
+        console.debugf("Short press, now mode: %s\n", modeSets[modeSetIndex][modeIndex]);
       } else if (button.released()) {
-//        console.debugln("Button released");
+/*
         switch (getLedMode()) {
           case OFF:
             console.debugln("Mode: Off");
@@ -201,7 +241,8 @@ void loop()
             break;
           default:
             break;
-        }
+          }
+*/
       }
     }
 
@@ -217,15 +258,13 @@ void loop()
     // toggle the built-in led
     frameled = !frameled;
     digitalWrite(LED_BUILTIN, frameled);
-
+/*
     bool radar = digitalRead(RADAR_PIN);
     if (lastRadar != radar) {
       lastRadar = radar;
       console.debugf("Radar: %s\n", radar ? "ON" : "OFF");
     }
-
+*/
   }
   firstRun = false;
 }
-
-

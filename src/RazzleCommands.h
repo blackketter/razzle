@@ -1,9 +1,25 @@
 #ifndef _RazzleCommands_
 #define _RazzleCommands_
 
+#include "Clock.h"
 #include "Console.h"
 #include "RazzleLeds.h"
-#include "Clock.h"
+#include "RazzleMode.h"
+
+class LEDModesCommand : public Command {
+  public:
+    const char* getName() { return "modes"; }
+    const char* getHelp() { return ("list LED modes"); }
+    void execute(Stream* c, uint8_t paramCount, char** params) {
+      RazzleMode* m = RazzleMode::first();
+      c->printf("Valid LED modes:\n");
+      while (m) {
+        c->printf("  %s\n", m->name());
+        m = m->next();
+      }
+    }
+};
+extern LEDModesCommand theLEDModesCommand;
 
 class LEDModeCommand : public Command {
   public:
@@ -11,11 +27,16 @@ class LEDModeCommand : public Command {
     const char* getHelp() { return ("set LED mode"); }
     void execute(Stream* c, uint8_t paramCount, char** params) {
       if (paramCount == 1) {
-        setLedMode(atoi(params[1]));
+        if (RazzleMode::named(params[1])) {
+          setLedMode(params[1]);
+        } else {
+          theLEDModesCommand.execute(c,paramCount,params);
+        }
       }
-      c->printf("LED Mode: %d\n", getLedMode());
+      c->printf("LED Mode: %s\n", getLedMode());
     }
 };
+
 
 class BrightnessCommand : public Command {
   public:

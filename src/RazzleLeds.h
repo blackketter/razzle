@@ -2,52 +2,17 @@
 #define _RazzleLeds_
 
 #define FASTLED_ALLOW_INTERRUPTS 0
+#include "Razzle.h"
+
 #include "FastLED.h"
 #include "WiFiConsole.h"
 
 typedef uint16_t led_t;
+typedef uint16_t framerate_t;
 
-enum modes {
-  FIRSTMODE,
-  COLORS = FIRSTMODE,
-  COPS = COLORS,
-//  AMBIENT,
-  FIRE,
-  LIFE,
-  BREATHING,
-  WAVE,
-  FLASHES,
-  ZIP,
-//  RAINBOW,
-  RAINBOWROTATE,
-  NOISE,
-  WHITENOISE,
-//  WHITE,
-  ENDCOLORS,
-
-  WHITES,
-  OFF = WHITES,
-  ON,
-  GREY80,
-  GREY40,
-  GREY20,
-  GREY10,
-  GREY08,
-  GREY04,
-  GREY02,
-  GREY01,
-  HALF,
-
-  ENDWHITES,
-  LASTMODE = ENDWHITES,
-};
-
-typedef uint16_t ledmode_t;
-
-void  setLedMode(ledmode_t newmode);
-ledmode_t   getLedMode();
+void  setLedMode(const char* newmode);
+const char* getLedMode();
 uint32_t lastModeSwitch();
-
 
 uint8_t getBrightness();  // depends on whether it's day or night
 uint8_t getNightBrightness();
@@ -56,15 +21,12 @@ void setBrightness(uint8_t day, uint8_t night);
 
 bool isDay();
 
-
-
-
 void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax);
 void  loopLeds();
 
 extern WiFiConsole console;
 
-
+uint32_t white(uint8_t y);
 
 
 #endif
