@@ -13,5 +13,3 @@ class ZipperMode : public RazzleMode {
 };
 
 ZipperMode theZipperMode;
-
-

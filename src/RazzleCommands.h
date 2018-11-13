@@ -28,12 +28,12 @@ class LEDModeCommand : public Command {
     void execute(Stream* c, uint8_t paramCount, char** params) {
       if (paramCount == 1) {
         if (RazzleMode::named(params[1])) {
-          setLedMode(params[1]);
+          setLEDMode(params[1]);
         } else {
           theLEDModesCommand.execute(c,paramCount,params);
         }
       }
-      c->printf("LED Mode: %s\n", getLedMode());
+      c->printf("LED Mode: %s\n", getLEDMode());
     }
 };
 

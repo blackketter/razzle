@@ -5,6 +5,7 @@ class FireMode : public RazzleMode {
     virtual const char* name() { return "Fire"; }
     virtual void draw(CRGB* frame);
     virtual framerate_t fps() { return 15; }
+    virtual bool canRun() { return numPixels() > 1; }
   private:
 };
 

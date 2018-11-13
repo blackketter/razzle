@@ -38,44 +38,6 @@
 //#define RADAR_PIN (25)
 #endif
 
-
-const char* colorModes[] =
-{
-  "Cops",
-  "Fire",
-  "Life",
-  "Breathing",
-  "Wave",
-  "Flashes",
-  "Zipper",
-  "RainbowRotate",
-  "Noise",
-  "WhiteNoise",
-  nullptr
-};
-
-const char* solidModes[] =
-{
-  "Off",
-  "On",
-  "Grey80",
-  "Grey40",
-  "Grey20",
-  "Grey10",
-  "Grey08",
-  "Grey04",
-  "Grey02",
-  "Grey01",
-  nullptr
-};
-
-const char** modeSets[] =
-{
-  colorModes,
-  solidModes,
-  nullptr
-};
-
 Switch button = Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY, 50, 1000);  // Switch between a digital pin and GND
 
 WiFiThing thing;
@@ -147,8 +109,6 @@ bool released;
 
 uint32_t autoSwitchInterval = 1000L * 5 * 60;
 const uint32_t holdTime = 1000;
-int modeIndex = 0;
-int modeSetIndex = 0;
 
 //bool lastRadar = false;
 
@@ -170,16 +130,16 @@ void setup() {
   delay(1000);
 
   thing.setTimezone(&usPT);
-  thing.setHostname(getDevice().hostname);
+  thing.setHostname(getDevice()->hostname);
 
   thing.begin(ssid, passphrase);
-  console.debugf("Welcome to %s\n", getDevice().hostname);
+  console.debugf("Welcome to %s\n", getDevice()->hostname);
 
   console.debugf("LED is on pin %d\n",LED_BUILTIN);
 
-  setBrightness(getDevice().defaultDayBrightness, getDevice().defaultNightBrightness);
-  setupLeds(getDevice().colorOrder, numPixels(), getDevice().powerSupplyMilliAmps);
-  setLedMode(modeSets[modeSetIndex][modeIndex]);
+  setBrightness(getDevice()->defaultDayBrightness, getDevice()->defaultNightBrightness);
+  setupLeds(getDevice()->colorOrder, numPixels(), getDevice()->powerSupplyMilliAmps);
+  setNextLEDMode();
 }
 
 void loop()
@@ -199,33 +159,20 @@ void loop()
     // update display
     uint32_t nowMillis = millis();
 
-    if (modeSetIndex == 0 && (nowMillis - lastModeSwitch()) > autoSwitchInterval) {
-      modeIndex++;
-      if (modeSets[modeSetIndex][modeIndex] == nullptr) {
-        modeIndex = 0;
-      }
-      setLedMode(modeSets[modeSetIndex][modeIndex]);
-      console.debugf("Autoswitch to mode %s\n", modeSets[modeSetIndex][modeIndex]);
+    if (shouldAutoSwitch() && (nowMillis - lastModeSwitch()) > autoSwitchInterval) {
+      setNextLEDMode();
+      console.debugf("Autoswitch to mode %s\n", getLEDMode());
     } else {
       if (button.longPress()) {
-        modeIndex = 0;
-        modeSetIndex++;
-        if (modeSets[modeSetIndex] == nullptr) {
-          modeSetIndex = 0;
-        }
-        setLedMode(modeSets[modeSetIndex][modeIndex]);
-        console.debugf("Long press, now mode: %s\n", modeSets[modeSetIndex][modeIndex]);
+        setNextLEDModeSet();
+        console.debugf("Long press, now mode: %s\n", getLEDMode());
       }
       if (button.pushed()) {
-        modeIndex++;
-        if (modeSets[modeSetIndex][modeIndex] == nullptr) {
-          modeIndex = 0;
-        }
-        setLedMode(modeSets[modeSetIndex][modeIndex]);
-        console.debugf("Short press, now mode: %s\n", modeSets[modeSetIndex][modeIndex]);
+        setNextLEDMode();
+        console.debugf("Short press, now mode: %s\n", getLEDMode());
       } else if (button.released()) {
 /*
-        switch (getLedMode()) {
+        switch (getLEDMode()) {
           case OFF:
             console.debugln("Mode: Off");
             if (isRemote()) {
@@ -233,7 +180,7 @@ void loop()
             }
             break;
           case ON:
-            setLedMode(ON);
+            setLEDMode(ON);
             console.debugln("Mode: On");
             if (isRemote()) {
               thing.httpGet("http://192.168.2.202:8080/jukebox/heyu.php?where=M4&what=on&ph=0&");

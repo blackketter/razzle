@@ -7,6 +7,8 @@
 #include "Commands/FPSCommand.h"
 FPSCommand theFPSCommand;
 
+#include "RazzleModes.h"
+
 #ifdef ESP8266
 #define LED_DATA_PIN    (D2)
 #else
@@ -22,7 +24,7 @@ CRGB* leds;
 
 CRGB* frames[2];
 
-const char* mode = nullptr;
+RazzleMode* currMode = nullptr;
 
 uint32_t lastFrameMillis = 0;
 uint8_t nextFrame = 1;
@@ -31,6 +33,9 @@ uint32_t nextFrameMillis = 1;
 uint8_t lastFrame = 0;
 const uint32_t defaultFrameInterval = 1;  // as fast as possible
 uint32_t frameIntervalMillis = defaultFrameInterval;
+
+int modeIndex = 0;
+int modeSetIndex = 0;
 
 
 uint32_t white(uint8_t y) {
@@ -108,25 +113,24 @@ void interpolateFrame() {
 
 
 void render(CRGB* frame, uint32_t time) {
-	if (mode) {
-		RazzleMode* theMode = RazzleMode::named(mode);
-		if (theMode) {
-			fps(theMode->fps());
-			theMode->draw(frame);
-		} else {
-			console.debugf("Couldn't find mode: %s\n", mode);
-		}
+	if (currMode) {
+		fps(currMode->fps());
+		currMode->draw(frame);
 	} else {
-		console.debugln("Missing mode name");
-		mode = "Cops";
+		console.debugln("No currMode!");
 	}
 }
 
-const char* getLedMode() { return mode;}
+const char* getLEDMode() {
+	return currMode->name();
+}
 
-void setLedMode(const char* newMode) {
-  if (mode == nullptr) return;
-  mode = newMode;
+bool setLEDMode(const char* newMode) {
+  if (newMode == nullptr) return false;
+  RazzleMode* namedMode = RazzleMode::named(newMode);
+  if (namedMode == nullptr) return false;
+	currMode = namedMode;
+
   lastFrame = 0;
   lastFrameMillis = nowMillis;
   fill_solid( frames[lastFrame], num_leds, CRGB::Black);
@@ -137,6 +141,37 @@ void setLedMode(const char* newMode) {
   fill_solid( frames[nextFrame], num_leds, CRGB::Black);
   render(frames[nextFrame], nextFrameMillis);
   lastModeSwitchTime = millis();
+}
+
+void setNextLEDMode() {
+	const char* nextModeName;
+	RazzleMode* nextMode;
+
+	do {
+		modeIndex++;
+		if (modeSets[modeSetIndex][modeIndex] == nullptr) {
+			modeIndex = 0;
+		}
+
+		nextModeName = modeSets[modeSetIndex][modeIndex];
+		nextMode = RazzleMode::named(nextModeName);
+
+	} while (nextMode == nullptr || !nextMode->canRun());
+
+		setLEDMode(nextModeName);
+}
+
+void setNextLEDModeSet() {
+	modeSetIndex++;
+	if (modeSets[modeSetIndex] == nullptr) {
+		modeSetIndex = 0;
+	}
+	modeIndex = 0;
+	setLEDMode(modeSets[modeSetIndex][modeIndex]);
+}
+
+bool shouldAutoSwitch() {
+	return modeSetIndex == 0;
 }
 
 void loopLeds() {

@@ -5,6 +5,7 @@ class LifeMode : public RazzleMode {
     virtual const char* name() { return "Life"; }
     virtual void draw(CRGB* frame);
     virtual framerate_t fps() { return 1; };
+    virtual bool canRun() { return numPixels() > 10; }
   private:
 };
 

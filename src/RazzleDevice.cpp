@@ -1,6 +1,6 @@
 #include "RazzleDevice.h"
 
-devInfo devices[] = {
+const devInfo devices[] = {
 
   { "5C:CF:7F:C3:B0:BD", "RazzleButton", 1,  1, RGB,  500, 128,  10 },
   { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  1, 60, GRB, 2000, 128,  10 },
@@ -12,19 +12,29 @@ devInfo devices[] = {
   { nullptr,             "RazzleUndef",  1,  1, RGB,  500, 127,  10 }
 };
 
-devInfo getDevice() {
+const devInfo* getDevice() {
+  static devInfo const* cacheDev = nullptr;
+
+  if (cacheDev) { return cacheDev; }
+
   int i = 0;
   do {
     if (strcasecmp(devices[i].mac, thing.getMacAddress().c_str()) == 0) {
-      return devices[i];
+      break;
     }
     i++;
   } while ( devices[i].mac != nullptr );
-  return devices[i];  // the unmatched default is returned
+  cacheDev = &devices[i];
+  return cacheDev;  // the unmatched default is returned
 }
 
 led_t numPixels() {
-  return getDevice().width * getDevice().height;
+  // memoize the number of pixels
+  static int32_t cachePixels = -1;
+  if (cachePixels < 0) {
+    cachePixels = getDevice()->width * getDevice()->height;
+  }
+  return cachePixels;
 }
 
 bool isRemote() {

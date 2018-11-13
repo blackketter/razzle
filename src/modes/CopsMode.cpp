@@ -15,20 +15,22 @@ typedef struct {
 typedef struct {
 } animationState;
 
+const uint8_t COPS_LEDS = 50;
+const uint8_t MIDDLE_LED = COPS_LEDS/2;
+const uint8_t SEG_LEN = 6;
+
 
 class CopsMode : public RazzleMode {
   public:
     virtual const char* name() { return "Cops"; }
     virtual void draw(CRGB* frame);
+    virtual bool canRun() { return numPixels() >= COPS_LEDS; }
   private:
 };
 
 CopsMode theCopsMode;
 
 
-const uint8_t COPS_LEDS = 50;
-const uint8_t MIDDLE_LED = COPS_LEDS/2;
-const uint8_t SEG_LEN = 6;
 
 const animationFrame copsAnimation[] = {
   { CRGB::White, MIDDLE_LED-SEG_LEN, SEG_LEN, 30},

@@ -16,7 +16,7 @@ struct devInfo {
 // other devices
 // 5C:CF:7F:10:4C:43 - Wemos D1 (full size)
 
-devInfo getDevice();
+const devInfo* getDevice();
 led_t numPixels();
 bool isRemote();
 
