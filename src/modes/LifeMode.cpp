@@ -13,13 +13,6 @@ LifeMode theLifeMode;
 
 void LifeMode::draw(CRGB* frame) {
   int count = 0;
-  static uint32_t lastDraw = 0;
-  uint32_t now = millis()/100;
-  if (now == lastDraw) {
-    return;
-  }
-
-  lastDraw = now;
 
   static int iterations = 0;
   for (led_t i = 0; i < numPixels(); i++) {

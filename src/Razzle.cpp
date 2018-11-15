@@ -100,7 +100,7 @@ void loop()
     // do not update LEDs or respond to button
   } else {
     // update display
-    uint32_t nowMillis = millis();
+    millis_t nowMillis = Uptime::millis();
 
     if (shouldAutoSwitch() && (nowMillis - lastModeSwitch()) > autoSwitchInterval) {
       setNextLEDMode();

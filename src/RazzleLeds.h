@@ -14,13 +14,14 @@
 
 typedef uint16_t led_t;
 typedef uint16_t framerate_t;
+typedef uint16_t pixel_t;
 
 bool setLEDMode(const char* newmode);
 void setNextLEDMode();
 void setNextLEDModeSet();
 bool shouldAutoSwitch();
 const char* getLEDMode();
-uint32_t lastModeSwitch();
+millis_t lastModeSwitch();
 
 uint8_t getBrightness();  // depends on whether it's day or night
 uint8_t getNightBrightness();
@@ -34,7 +35,8 @@ void  loopLeds();
 
 extern WiFiConsole console;
 
-uint32_t white(uint8_t y);
+CRGB white(uint8_t y);
+
 
 
 #endif

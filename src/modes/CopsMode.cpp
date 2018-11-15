@@ -15,22 +15,49 @@ typedef struct {
 typedef struct {
 } animationState;
 
+class AnimationMode : public RazzleMode {
+  public:
+    AnimationMode(const char* name, const animationFrame* frames, led_t minLeds) : _name(name), _animationFrames(frames), _minLeds(minLeds) {}
+    virtual const char* name() { return _name; }
+    virtual void draw(CRGB* frame);
+    virtual bool canRun() { return numPixels() >= _minLeds; }
+  private:
+   frameIndex_t _frameIndex = 0;
+   const char* _name;
+   millis_t _frameTime = 0;
+   const animationFrame* _animationFrames;
+   led_t _minLeds;
+};
+
+void AnimationMode::draw(CRGB* frame) {
+
+  bool drawFrame = false;
+
+  millis_t now = Uptime::millis();
+  if (lastModeSwitch() > _frameTime) {
+    // restart animation
+    _frameTime = now;
+    _frameIndex = 0;
+    drawFrame = true;
+  } else if (now > (_frameTime + _animationFrames[_frameIndex].delay )) {
+    _frameIndex++;
+    _frameTime = now;
+    drawFrame = true;
+  }
+
+  if (drawFrame) {
+    if (_animationFrames[_frameIndex].delay < 0) {
+      _frameIndex = 0;
+    }
+
+    fill_solid( &(frame[_animationFrames[_frameIndex].offset]), _animationFrames[_frameIndex].len, _animationFrames[_frameIndex].color);
+
+  }
+}
+
 const uint8_t COPS_LEDS = 50;
 const uint8_t MIDDLE_LED = COPS_LEDS/2;
 const uint8_t SEG_LEN = 6;
-
-
-class CopsMode : public RazzleMode {
-  public:
-    virtual const char* name() { return "Cops"; }
-    virtual void draw(CRGB* frame);
-    virtual bool canRun() { return numPixels() >= COPS_LEDS; }
-  private:
-};
-
-CopsMode theCopsMode;
-
-
 
 const animationFrame copsAnimation[] = {
   { CRGB::White, MIDDLE_LED-SEG_LEN, SEG_LEN, 30},
@@ -54,33 +81,4 @@ const animationFrame copsAnimation[] = {
   { 0, 0, 0, ANIMATION_END}
 };
 
-void CopsMode::draw(CRGB* frame) {
-	if (numPixels() < COPS_LEDS) { return; }
-
-  static frameIndex_t frameIndex = 0;
-  static millis_t frameTime = 0;
-  static const animationFrame* animationFrames = copsAnimation;
-
-  bool drawFrame = false;
-
-  millis_t now = millis();
-  if (lastModeSwitch() > frameTime) {
-    // restart animation
-    frameTime = now;
-    frameIndex = 0;
-    drawFrame = true;
-  } else if (now > (frameTime + animationFrames[frameIndex].delay )) {
-    frameIndex++;
-    frameTime = now;
-    drawFrame = true;
-  }
-
-  if (drawFrame) {
-    if (animationFrames[frameIndex].delay < 0) {
-      frameIndex = 0;
-    }
-
-    fill_solid( &(frame[animationFrames[frameIndex].offset]), animationFrames[frameIndex].len, animationFrames[frameIndex].color);
-
-  }
-}
+AnimationMode theCopsMode("Cops",copsAnimation,COPS_LEDS);

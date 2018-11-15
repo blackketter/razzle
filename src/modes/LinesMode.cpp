@@ -4,7 +4,7 @@ class LinesMode : public RazzleMode {
   public:
     virtual const char* name() { return "Lines"; }
     virtual bool canRun() { return getDevice()->width > 2 && getDevice()->height > 2; }
-    virtual framerate_t fps() { return 1; }
+    virtual framerate_t fps() { return 5; }
 
     virtual void draw(FastLED_NeoMatrix* m) {
       uint16_t w = getDevice()->width;

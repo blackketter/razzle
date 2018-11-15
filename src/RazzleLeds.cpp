@@ -17,30 +17,30 @@ CRGB* frames[2];
 
 RazzleMode* currMode = nullptr;
 
-uint32_t lastFrameMillis = 0;
+millis_t lastFrameMillis = 0;
 uint8_t nextFrame = 1;
 
-uint32_t nextFrameMillis = 1;
+millis_t nextFrameMillis = 1;
 uint8_t lastFrame = 0;
-const uint32_t defaultFrameInterval = 1;  // as fast as possible
-uint32_t frameIntervalMillis = defaultFrameInterval;
+const millis_t defaultFrameInterval = 1;  // as fast as possible
+millis_t frameIntervalMillis = defaultFrameInterval;
 
 int modeIndex = 0;
 int modeSetIndex = 0;
 
 FastLED_NeoMatrix *matrix;
 
-uint32_t white(uint8_t y) {
+CRGB white(uint8_t y) {
   uint32_t y32 = y;
   return y32 + (y32 << 8) + (y32 << 16);
 }
 
 
-inline void fps(uint32_t f)  { frameIntervalMillis = 1000/f; };
+inline void fps(framerate_t f)  { frameIntervalMillis = 1000/f; };
 
-uint32_t nowMillis = 0;
-uint32_t lastModeSwitchTime = 0;
-uint32_t lastModeSwitch() { return lastModeSwitchTime; }
+millis_t nowMillis = 0;
+millis_t lastModeSwitchTime = 0;
+millis_t lastModeSwitch() { return lastModeSwitchTime; }
 
 uint8_t dayBrightness = 128;
 uint8_t nightBrightness = 10;
@@ -195,7 +195,7 @@ void interpolateFrame() {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void render(CRGB* frame, uint32_t time) {
+void render(CRGB* frame) {
 	if (currMode) {
 		fps(currMode->fps());
 		matrix->setLeds(frame);
@@ -224,13 +224,13 @@ bool setLEDMode(const char* newMode) {
   lastFrame = 0;
   lastFrameMillis = nowMillis;
   fill_solid( frames[lastFrame], num_leds, CRGB::Black);
-  render(frames[lastFrame], lastFrameMillis);
+  render(frames[lastFrame]);
 
   nextFrame = 1;
   nextFrameMillis = nowMillis + frameIntervalMillis;
   fill_solid( frames[nextFrame], num_leds, CRGB::Black);
-  render(frames[nextFrame], nextFrameMillis);
-  lastModeSwitchTime = millis();
+  render(frames[nextFrame]);
+  lastModeSwitchTime = Uptime::millis();
   return true;
 }
 
@@ -268,7 +268,7 @@ bool shouldAutoSwitch() {
 }
 
 void loopLeds() {
-  nowMillis = millis();
+  nowMillis = Uptime::millis();
   if (nowMillis >= nextFrameMillis) {
     uint8_t temp = lastFrame;
     lastFrame = nextFrame;
@@ -277,7 +277,7 @@ void loopLeds() {
     nextFrameMillis = nowMillis + frameIntervalMillis;
     memmove(frames[nextFrame], frames[lastFrame], num_leds * sizeof(CRGB));
 
-    render(frames[nextFrame], nextFrameMillis);
+    render(frames[nextFrame]);
   }
 
   interpolateFrame();
