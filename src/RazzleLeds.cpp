@@ -231,6 +231,7 @@ bool setLEDMode(const char* newMode) {
   fill_solid( frames[nextFrame], num_leds, CRGB::Black);
   render(frames[nextFrame], nextFrameMillis);
   lastModeSwitchTime = millis();
+  return true;
 }
 
 void setNextLEDMode() {

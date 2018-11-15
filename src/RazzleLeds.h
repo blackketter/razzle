@@ -2,6 +2,10 @@
 #define _RazzleLeds_
 
 #define FASTLED_ALLOW_INTERRUPTS 0
+
+// suppress extranious warnings
+#define FASTLED_INTERNAL
+
 #include "FastLED.h"
 
 #include "Razzle.h"
