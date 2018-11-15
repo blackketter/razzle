@@ -19,3 +19,6 @@
 [submodule "lib/Switch"]
 	path = lib/Switch
 	url = https://github.com/blackketter/Switch.git
+[submodule "lib/FastLED_NeoMatrix"]
+	path = lib/FastLED_NeoMatrix
+	url = https://github.com/blackketter/FastLED_NeoMatrix.git

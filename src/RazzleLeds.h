@@ -2,9 +2,10 @@
 #define _RazzleLeds_
 
 #define FASTLED_ALLOW_INTERRUPTS 0
+#include "FastLED.h"
+
 #include "Razzle.h"
 
-#include "FastLED.h"
 #include "WiFiConsole.h"
 
 typedef uint16_t led_t;
@@ -24,7 +25,7 @@ void setBrightness(uint8_t day, uint8_t night);
 
 bool isDay();
 
-void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax);
+void  setupLeds();
 void  loopLeds();
 
 extern WiFiConsole console;

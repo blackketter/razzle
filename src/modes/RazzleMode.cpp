@@ -1,9 +1,8 @@
 #include "RazzleMode.h"
 
 RazzleMode::RazzleMode() {
-  RazzleMode* origFirst = _first;
+  _next = _first;
   _first = this;
-  _next = origFirst;
 }
 
 RazzleMode* RazzleMode::named(const char* find) {

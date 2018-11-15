@@ -9,15 +9,6 @@ FPSCommand theFPSCommand;
 
 #include "RazzleModes.h"
 
-#ifdef ESP8266
-#define LED_DATA_PIN    (D2)
-#else
-#define LED_DATA_PIN    (23)
-#endif
-
-#define CHIPSET         WS2811
-#define LIGHT_SENSOR    (A0)
-
 led_t num_leds;
 
 CRGB* leds;
@@ -37,6 +28,7 @@ uint32_t frameIntervalMillis = defaultFrameInterval;
 int modeIndex = 0;
 int modeSetIndex = 0;
 
+FastLED_NeoMatrix *matrix;
 
 uint32_t white(uint8_t y) {
   uint32_t y32 = y;
@@ -57,9 +49,11 @@ uint8_t getNightBrightness() { return nightBrightness; }
 uint8_t getDayBrightness() { return dayBrightness; }
 void setBrightness(uint8_t day, uint8_t night) { dayBrightness = day; nightBrightness = night; }
 
-void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
+void  setupLeds() {
 
-  num_leds = led_count;
+	uint32_t milliAmpsMax =  getDevice()->powerSupplyMilliAmps;
+	EOrder order = getDevice()->colorOrder;
+ 	num_leds = numPixels();
 
   leds = new CRGB[num_leds];
   frames[0] = new CRGB[num_leds];
@@ -72,30 +66,121 @@ void  setupLeds(EOrder order, led_t led_count, uint32_t milliAmpsMax) {
     recover();
     return;
   }
+	led_t offset = 0;
+	led_t c;
+	int i = 0;
 
   switch (order) {
     case RGB:
-      FastLED.addLeds<CHIPSET, LED_DATA_PIN, RGB>(leds, num_leds).setCorrection( TypicalLEDStrip );
+    	// fucking templates mean that this needs to be hardcoded
+    	c = getDevice()->segment[i++];
+    	if (c) {
+    		FastLED.addLeds<CHIPSET, LED_DATA_PIN0, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+				offset += c;
+				c = getDevice()->segment[i++];
+				if (c) {
+					FastLED.addLeds<CHIPSET, LED_DATA_PIN1, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+					offset += c;
+					c = getDevice()->segment[i++];
+					if (c) {
+						FastLED.addLeds<CHIPSET, LED_DATA_PIN2, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+						offset += c;
+						c = getDevice()->segment[i++];
+						if (c) {
+							FastLED.addLeds<CHIPSET, LED_DATA_PIN3, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+							offset += c;
+							c = getDevice()->segment[i++];
+							if (c) {
+								FastLED.addLeds<CHIPSET, LED_DATA_PIN4, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+								offset += c;
+								c = getDevice()->segment[i++];
+								if (c) {
+									FastLED.addLeds<CHIPSET, LED_DATA_PIN5, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+									offset += c;
+									c = getDevice()->segment[i++];
+									if (c) {
+										c = getDevice()->segment[i++];
+										FastLED.addLeds<CHIPSET, LED_DATA_PIN6, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+										offset += c;
+										if (c) {
+											FastLED.addLeds<CHIPSET, LED_DATA_PIN7, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+    								}
+    							}
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
       break;
     case GRB:
-      FastLED.addLeds<CHIPSET, LED_DATA_PIN, GRB>(leds, num_leds).setCorrection( TypicalLEDStrip );
+    	// fucking templates mean that this needs to be hardcoded
+    	c = getDevice()->segment[i++];
+    	if (c) {
+    		FastLED.addLeds<CHIPSET, LED_DATA_PIN0, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+				offset += c;
+				c = getDevice()->segment[i++];
+				if (c) {
+					FastLED.addLeds<CHIPSET, LED_DATA_PIN1, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+					offset += c;
+					c = getDevice()->segment[i++];
+					if (c) {
+						FastLED.addLeds<CHIPSET, LED_DATA_PIN2, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+						offset += c;
+						c = getDevice()->segment[i++];
+						if (c) {
+							FastLED.addLeds<CHIPSET, LED_DATA_PIN3, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+							offset += c;
+							c = getDevice()->segment[i++];
+							if (c) {
+								FastLED.addLeds<CHIPSET, LED_DATA_PIN4, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+								offset += c;
+								c = getDevice()->segment[i++];
+								if (c) {
+									FastLED.addLeds<CHIPSET, LED_DATA_PIN5, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+									offset += c;
+									c = getDevice()->segment[i++];
+									if (c) {
+										FastLED.addLeds<CHIPSET, LED_DATA_PIN6, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+										offset += c;
+										c = getDevice()->segment[i++];
+										if (c) {
+											FastLED.addLeds<CHIPSET, LED_DATA_PIN7, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+    								}
+    							}
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
       break;
     default:
       console.debugln("ERROR: Bad color order");
   }
 
   FastLED.setMaxPowerInVoltsAndMilliamps	( 5, milliAmpsMax);
-  if (num_leds > 100) {
+  led_t maxSegmentLen = 0;
+  for (int i = 0; i < MAX_SEGMENTS; i++) {
+  	led_t len = getDevice()->segment[i];
+  	if (len > maxSegmentLen) {
+  		maxSegmentLen = len;
+  	}
+  }
+  // 120 led long string is about 100fps, dithering at about 50fps
+  if (maxSegmentLen > 120) {
     FastLED.setDither( 0 );
   }
   FastLED.setCorrection(UncorrectedColor);
   FastLED.setTemperature(UncorrectedTemperature);
   FastLED.show(getBrightness());
+
+  matrix = new FastLED_NeoMatrix(leds, getDevice()->width, getDevice()->height,
+  	NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG);
 }
 
 
 void interpolateFrame() {
-
   uint8_t fract8 = ((nowMillis - lastFrameMillis) * 256) / (nextFrameMillis - lastFrameMillis);
   if (fract8 == 0) {
     memmove(leds, frames[lastFrame], num_leds * sizeof(CRGB));
@@ -108,14 +193,13 @@ void interpolateFrame() {
   }
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
-
 
 void render(CRGB* frame, uint32_t time) {
 	if (currMode) {
 		fps(currMode->fps());
-		currMode->draw(frame);
+		matrix->setLeds(frame);
+		currMode->draw(matrix);
 	} else {
 		console.debugln("No currMode!");
 	}
@@ -129,7 +213,13 @@ bool setLEDMode(const char* newMode) {
   if (newMode == nullptr) return false;
   RazzleMode* namedMode = RazzleMode::named(newMode);
   if (namedMode == nullptr) return false;
-	currMode = namedMode;
+  if (!namedMode->canRun()) return false;
+  if (currMode == namedMode) return true;
+
+  if (currMode) { currMode->end(); }
+  currMode = namedMode;
+	currMode->begin();
+
 
   lastFrame = 0;
   lastFrameMillis = nowMillis;
@@ -167,7 +257,9 @@ void setNextLEDModeSet() {
 		modeSetIndex = 0;
 	}
 	modeIndex = 0;
-	setLEDMode(modeSets[modeSetIndex][modeIndex]);
+	if (!setLEDMode(modeSets[modeSetIndex][modeIndex])) {
+		setNextLEDMode();
+	}
 }
 
 bool shouldAutoSwitch() {
