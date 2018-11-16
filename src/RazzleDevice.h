@@ -46,5 +46,6 @@ struct devInfo {
 const devInfo* getDevice();
 led_t numPixels();
 bool isRemote();
+led_t maxSegmentLen();
 
 #endif

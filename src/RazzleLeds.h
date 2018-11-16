@@ -13,11 +13,11 @@
 #include "WiFiConsole.h"
 
 typedef uint16_t led_t;
-typedef uint16_t framerate_t;
+typedef float framerate_t;
 typedef uint16_t pixel_t;
 
 bool setLEDMode(const char* newmode);
-void setNextLEDMode();
+void setNextLEDMode(bool allowWants = false);
 void setNextLEDModeSet();
 bool shouldAutoSwitch();
 const char* getLEDMode();

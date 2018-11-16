@@ -5,6 +5,8 @@ const char* colorModes[] =
 {
   "Cops",
   "Fire2",
+  "Analog",
+  "Digital",
   "Lines",
   "Fire",
   "Life",

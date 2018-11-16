@@ -38,11 +38,11 @@ Switch button = Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY, 50, 1000);  //
 
 WiFiThing thing;
 
-Clock dayClock(&usPT);
+Clock clock(&usPT);
 bool isDay() {
 
-  uint8_t hour = dayClock.hour();
-  return dayClock.hasBeenSet() && (hour >= 8) && (hour < 20);  // daytime is 8 to 8.  if the clock hasn't been set, it's night for safety
+  uint8_t hour = clock.hour();
+  return clock.hasBeenSet() && (hour >= 8) && (hour < 20);  // daytime is 8 to 8.  if the clock hasn't been set, it's night for safety
 }
 
 
@@ -82,7 +82,7 @@ void setup() {
 
   setBrightness(getDevice()->defaultDayBrightness, getDevice()->defaultNightBrightness);
   setupLeds();
-  setNextLEDMode();
+  setNextLEDMode(true);
 }
 
 void loop()
@@ -103,7 +103,7 @@ void loop()
     millis_t nowMillis = Uptime::millis();
 
     if (shouldAutoSwitch() && (nowMillis - lastModeSwitch()) > autoSwitchInterval) {
-      setNextLEDMode();
+      setNextLEDMode(true);
       console.debugf("Autoswitch to mode %s\n", getLEDMode());
     } else {
       if (button.longPress()) {

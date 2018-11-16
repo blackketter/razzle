@@ -18,6 +18,7 @@ class RazzleMode {
 
     virtual bool wantsToRun() { return false; }
     virtual bool canRun() { return true; }
+    virtual bool dither() { return true; }
 
     virtual framerate_t fps() { return 1000; } // as fast as possible
 

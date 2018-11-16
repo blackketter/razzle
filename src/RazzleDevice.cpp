@@ -41,3 +41,19 @@ bool isRemote() {
   return numPixels() == 1;
 }
 
+led_t maxSegmentLen() {
+  static led_t maxSegmentLenCache = 0;
+  if (maxSegmentLenCache == 0) {
+    for (int i = 0; i < MAX_SEGMENTS; i++) {
+      led_t len = getDevice()->segment[i];
+      if (len > maxSegmentLenCache) {
+        maxSegmentLenCache = len;
+      }
+    }
+  }
+
+  return maxSegmentLenCache;
+}
+
+
+

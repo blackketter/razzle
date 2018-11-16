@@ -160,17 +160,7 @@ void  setupLeds() {
   }
 
   FastLED.setMaxPowerInVoltsAndMilliamps	( 5, milliAmpsMax);
-  led_t maxSegmentLen = 0;
-  for (int i = 0; i < MAX_SEGMENTS; i++) {
-  	led_t len = getDevice()->segment[i];
-  	if (len > maxSegmentLen) {
-  		maxSegmentLen = len;
-  	}
-  }
-  // 120 led long string is about 100fps, dithering at about 50fps
-  if (maxSegmentLen > 120) {
-    FastLED.setDither( 0 );
-  }
+
   FastLED.setCorrection(UncorrectedColor);
   FastLED.setTemperature(UncorrectedTemperature);
   FastLED.show(getBrightness());
@@ -214,13 +204,19 @@ bool setLEDMode(const char* newMode) {
   RazzleMode* namedMode = RazzleMode::named(newMode);
   if (namedMode == nullptr) return false;
   if (!namedMode->canRun()) return false;
+
+  lastModeSwitchTime = Uptime::millis();
   if (currMode == namedMode) return true;
 
   if (currMode) { currMode->end(); }
-  currMode = namedMode;
+  currMode = namedMode;  // 120 led long string is about 100fps, dithering at about 50fps
+
+  if (maxSegmentLen() > 120) {
+    FastLED.setDither( 0 );
+  } else {
+  	FastLED.setDither(currMode->dither());
+  }
 	currMode->begin();
-
-
   lastFrame = 0;
   lastFrameMillis = nowMillis;
   fill_solid( frames[lastFrame], num_leds, CRGB::Black);
@@ -230,26 +226,50 @@ bool setLEDMode(const char* newMode) {
   nextFrameMillis = nowMillis + frameIntervalMillis;
   fill_solid( frames[nextFrame], num_leds, CRGB::Black);
   render(frames[nextFrame]);
-  lastModeSwitchTime = Uptime::millis();
   return true;
 }
 
-void setNextLEDMode() {
+void setNextLEDMode(bool allowWants) {
 	const char* nextModeName;
-	RazzleMode* nextMode;
+	RazzleMode* nextMode = nullptr;
 
-	do {
-		modeIndex++;
-		if (modeSets[modeSetIndex][modeIndex] == nullptr) {
-			modeIndex = 0;
+	if (allowWants) {
+		nextMode = RazzleMode::first();
+		int wantsCount = 0;
+		while (nextMode) {
+			if (nextMode->canRun() && nextMode->wantsToRun())
+				wantsCount++;;
+			nextMode = nextMode->next();
 		}
+		if (wantsCount) {
+			wantsCount = random(wantsCount);
+			nextMode = RazzleMode::first();
+			while (nextMode) {
+				if (nextMode->canRun() && nextMode->wantsToRun()) {
+					if (wantsCount == 0) {
+						break;
+					}
+					wantsCount--;
+				}
+				nextMode = nextMode->next();
+			}
+		}
+	}
 
-		nextModeName = modeSets[modeSetIndex][modeIndex];
-		nextMode = RazzleMode::named(nextModeName);
+	if (nextMode == nullptr) {
+		do {
+			modeIndex++;
+			if (modeSets[modeSetIndex][modeIndex] == nullptr) {
+				modeIndex = 0;
+			}
 
-	} while (nextMode == nullptr || !nextMode->canRun());
+			nextModeName = modeSets[modeSetIndex][modeIndex];
+			nextMode = RazzleMode::named(nextModeName);
 
-		setLEDMode(nextModeName);
+		} while (nextMode == nullptr || !nextMode->canRun());
+	}
+
+	setLEDMode(nextMode->name());
 }
 
 void setNextLEDModeSet() {
