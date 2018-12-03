@@ -23,3 +23,4 @@ SolidMode SolidGrey08("Grey08", 0x08080808);
 SolidMode SolidGrey04("Grey04", 0x04040404);
 SolidMode SolidGrey02("Grey02", 0x02020202);
 SolidMode SolidGrey01("Grey01", 0x01010101);
+SolidMode Reboot("Reboot", 0x00ff0000);

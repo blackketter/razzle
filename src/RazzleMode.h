@@ -1,15 +1,17 @@
 #ifndef _RazzleMode_
 #define _RazzleMode_
 
-#include "RazzleDevice.h"
 #include "RazzleLeds.h"
 #include "FastLED_NeoMatrix.h"
+#include "RazzleDevice.h"
 
 class RazzleMode {
   public:
     RazzleMode();
+
     virtual void draw(CRGB* frame) {}  // must implement one of the draw methods
     virtual void draw(FastLED_NeoMatrix* matrix) { draw(matrix->getLeds()); }
+
     virtual const char* name() = 0;
 
     virtual void begin() {}
@@ -20,7 +22,7 @@ class RazzleMode {
     virtual bool canRun() { return true; }
     virtual bool dither() { return true; }
 
-    virtual framerate_t fps() { return 1000; } // as fast as possible
+    virtual framerate_t fps() { return 0; } // as fast as possible
 
     RazzleMode* next() { return _next; };
     void setNext(RazzleMode* next) { _next = next; }

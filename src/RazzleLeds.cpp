@@ -3,6 +3,8 @@
 #include <Clock.h>
 #include "RazzleCommands.h"
 #include "Razzle.h"
+#include "RazzleDevice.h"
+//#include "GFX_Buffer.h"
 
 #include "Commands/FPSCommand.h"
 FPSCommand theFPSCommand;
@@ -14,6 +16,7 @@ led_t num_leds;
 CRGB* leds;
 
 CRGB* frames[2];
+//GFX_Buffer* frame2x;
 
 RazzleMode* currMode = nullptr;
 
@@ -22,7 +25,7 @@ uint8_t nextFrame = 1;
 
 millis_t nextFrameMillis = 1;
 uint8_t lastFrame = 0;
-const millis_t defaultFrameInterval = 1;  // as fast as possible
+const millis_t defaultFrameInterval = 0;  // as fast as possible
 millis_t frameIntervalMillis = defaultFrameInterval;
 
 int modeIndex = 0;
@@ -36,11 +39,12 @@ CRGB white(uint8_t y) {
 }
 
 
-inline void fps(framerate_t f)  { frameIntervalMillis = 1000/f; };
+inline void fps(framerate_t f)  { frameIntervalMillis = f ? 1000/f : 0; };
 
 millis_t nowMillis = 0;
 millis_t lastModeSwitchTime = 0;
 millis_t lastModeSwitch() { return lastModeSwitchTime; }
+void resetLastModeSwitch() { lastModeSwitchTime = Uptime::millis(); }
 
 uint8_t dayBrightness = 128;
 uint8_t nightBrightness = 10;
@@ -58,6 +62,8 @@ void  setupLeds() {
   leds = new CRGB[num_leds];
   frames[0] = new CRGB[num_leds];
   frames[1] = new CRGB[num_leds];
+//	frame2x = new GFX_Buffer(getDevice()->width*2, getDevice()->height*2);
+
   fill_solid(leds, num_leds, CRGB::Black);
   fill_solid(frames[0], num_leds, CRGB::Black);
   fill_solid(frames[1], num_leds, CRGB::Black);
@@ -204,9 +210,9 @@ bool setLEDMode(const char* newMode) {
   RazzleMode* namedMode = RazzleMode::named(newMode);
   if (namedMode == nullptr) return false;
   if (!namedMode->canRun()) return false;
-
-  lastModeSwitchTime = Uptime::millis();
   if (currMode == namedMode) return true;
+
+	resetLastModeSwitch();
 
   if (currMode) { currMode->end(); }
   currMode = namedMode;  // 120 led long string is about 100fps, dithering at about 50fps
@@ -227,6 +233,10 @@ bool setLEDMode(const char* newMode) {
   fill_solid( frames[nextFrame], num_leds, CRGB::Black);
   render(frames[nextFrame]);
   return true;
+}
+
+bool isLEDMode(const char* isMode) {
+	return strcasecmp(getLEDMode(), isMode) == 0;
 }
 
 void setNextLEDMode(bool allowWants) {

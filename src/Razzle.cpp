@@ -20,21 +20,8 @@
 #include "RazzleCommands.h"
 #include "RazzleDevice.h"
 
-#if defined(ESP8266)
-#define BUTTON_PIN (D6)
-#define BUTTON_POLARITY (LOW)
-#define BUTTON_INPUT (INPUT_PULLUP)
-//#define RADAR_PIN (D5)
-#endif
-
-#if defined(ESP32)
-#define BUTTON_PIN (22)
-#define BUTTON_POLARITY (HIGH)
-#define BUTTON_INPUT (INPUT_PULLDOWN)
-//#define RADAR_PIN (25)
-#endif
-
-Switch button = Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY, 50, 1000);  // Switch between a digital pin and GND
+Switch* pir;
+Switch* button;
 
 WiFiThing thing;
 
@@ -42,7 +29,7 @@ Clock clock(&usPT);
 bool isDay() {
 
   uint8_t hour = clock.hour();
-  return clock.hasBeenSet() && (hour >= 8) && (hour < 20);  // daytime is 8 to 8.  if the clock hasn't been set, it's night for safety
+  return clock.hasBeenSet() && (hour >= 8) && (hour < 17);  // daytime is 8 to 5.  if the clock hasn't been set, it's night for safety
 }
 
 
@@ -54,7 +41,32 @@ bool pressed;
 bool released;
 
 uint32_t autoSwitchInterval = 1000L * 5 * 60;
-const uint32_t holdTime = 1000;
+
+
+class SwitchCommand : public Command {
+  public:
+    const char* getName() { return "switch"; }
+    const char* getHelp() { return ("set autoswitch interval in seconds (0 to disable)"); }
+    void execute(Stream* c, uint8_t paramCount, char** params) {
+      uint32_t b = 0;
+      if (paramCount == 1) {
+        b = atoi(params[1]);
+        autoSwitchInterval = b*1000;
+      }
+      c->printf("autoswitch interval: %d seconds\n", autoSwitchInterval/1000);
+    }
+};
+SwitchCommand theSwitchCommand;
+
+class NextCommand : public Command {
+  public:
+    const char* getName() { return "next"; }
+    const char* getHelp() { return ("switch to next mode"); }
+    void execute(Stream* c, uint8_t paramCount, char** params) {
+      setNextLEDMode(true);
+    }
+};
+NextCommand theNextCommand;
 
 //bool lastRadar = false;
 
@@ -68,7 +80,9 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);  // initialize onboard LED as output
   digitalWrite(LED_BUILTIN, true);  // true = LED off
 
-//  pinMode(RADAR_PIN, INPUT);
+  if (getDevice()->relayPin) {
+    pinMode(getDevice()->relayPin, OUTPUT);
+  }
 
   delay(1000);
 
@@ -83,15 +97,35 @@ void setup() {
   setBrightness(getDevice()->defaultDayBrightness, getDevice()->defaultNightBrightness);
   setupLeds();
   setNextLEDMode(true);
+  if (getDevice()->pirPin) {
+    pir = new Switch(getDevice()->pirPin, INPUT_PULLUP, LOW, 50, 1000);
+    console.debugf("PIR is on pin %d\n",getDevice()->pirPin);
+  }
+  button = new Switch(BUTTON_PIN, BUTTON_INPUT, BUTTON_POLARITY, 50, 1000);  // Switch between a digital pin and GND
+  console.debugf("button is on pin %d\n",BUTTON_PIN);
+}
+
+void tick() {
+  static time_t last = 0;
+  static uint32_t loops = 0;
+  time_t curSec = Uptime::seconds();
+  loops++;
+  if (last != curSec) {
+    console.debugf("tick - loops %d\n", loops);
+    last = curSec;
+    loops = 0;
+  }
 }
 
 void loop()
 {
   static bool frameled = true;
-  button.poll();
+
+  button->poll();
+
   thing.idle();
 
-  if (firstRun && button.on()) {
+  if (firstRun && button->on()) {
     recoverMode = true;
     console.debugln("BUTTON DOWN: RECOVER MODE");
   }
@@ -99,21 +133,32 @@ void loop()
   if (recoverMode) {
     // do not update LEDs or respond to button
   } else {
+
     // update display
     millis_t nowMillis = Uptime::millis();
 
-    if (shouldAutoSwitch() && (nowMillis - lastModeSwitch()) > autoSwitchInterval) {
+    if (shouldAutoSwitch() && autoSwitchInterval && (nowMillis - lastModeSwitch()) > autoSwitchInterval) {
       setNextLEDMode(true);
-      console.debugf("Autoswitch to mode %s\n", getLEDMode());
+
+      //console.executeCommandLine("info");
+      //resetLastModeSwitch();
+
+      console.debugf("Autoswitched to mode %s\n", getLEDMode());
     } else {
-      if (button.longPress()) {
+      if (button->longPress()) {
         setNextLEDModeSet();
         console.debugf("Long press, now mode: %s\n", getLEDMode());
       }
-      if (button.pushed()) {
+      if (button->pushedDuration() >  5000) {
+        setLEDMode("Reboot");
+      }
+      if (button->pushed()) {
         setNextLEDMode();
         console.debugf("Short press, now mode: %s\n", getLEDMode());
-      } else if (button.released()) {
+      } else if (button->released()) {
+        if (isLEDMode("Reboot")) {
+          thing.reboot();
+        }
 /*
         switch (getLEDMode()) {
           case OFF:
@@ -136,6 +181,26 @@ void loop()
       }
     }
 
+    if (pir) {
+      pir->poll();
+
+      if (pir->pushed()) {
+        console.debugln("PIR low");
+        if (getDevice()->relayPin) {
+          digitalWrite(getDevice()->relayPin, true );
+        }
+        setLEDMode("OFF");
+      }
+
+      if (pir->released()) {
+        console.debugln("PIR high");
+        if (getDevice()->relayPin) {
+          digitalWrite(getDevice()->relayPin, false );
+        }
+        setLEDMode("ON");
+      }
+    }
+
     loopLeds();
 
     // toggle the built-in led
@@ -149,5 +214,6 @@ void loop()
     }
 */
   }
+
   firstRun = false;
 }

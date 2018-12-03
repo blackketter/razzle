@@ -28,8 +28,8 @@ void LifeMode::draw(CRGB* frame) {
     iterations = 0;
   } else {
     uint8_t rule = 110;
-    CRGB temp[numPixels()];
-    for (led_t i = 1; i < numPixels()-1; i++) {
+    CRGB temp[numPixels()+2];
+    for (led_t i = 0; i < numPixels(); i++) {
       uint8_t cur_pattern = (frame[i-1]!=(CRGB)CRGB::Black)*4 + (frame[i]!=(CRGB)CRGB::Black)*2 + (frame[i+1]!=(CRGB)CRGB::Black);
       temp[i] = ((rule >> cur_pattern)&0x01) ? CRGB::White : CRGB::Black;
     }

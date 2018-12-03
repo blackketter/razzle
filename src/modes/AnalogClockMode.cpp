@@ -1,12 +1,11 @@
-#include "RazzleMode.h"
+#include "ClockMode.h"
 
-class AnalogClockMode : public RazzleMode {
+class AnalogClockMode : public ClockMode {
   public:
     virtual const char* name() { return "Analog"; }
     virtual void draw(FastLED_NeoMatrix* m);
-    virtual framerate_t fps() { return 1; }
+    virtual framerate_t fps() { return 1.0; }
     virtual bool canRun() { return getDevice()->width > 7 && getDevice()->height > 7 && clock.hasBeenSet(); }
-    virtual bool wantsToRun() { return clock.hour() > 22 || clock.hour() < 7; }
     virtual bool dither() { return false; }
   private:
 
@@ -42,12 +41,18 @@ void AnalogClockMode::draw(FastLED_NeoMatrix* m) {
   endX = sin(minute / 60.0 * M_PI * 2.0)*len;
   endY = -cos(minute / 60.0 * M_PI * 2.0)*len;
   m->drawLine(centerX, centerY, centerX+endX, centerY+endY, LED_ORANGE_HIGH);
+  m->drawLine(centerX-1, centerY, centerX+endX, centerY+endY, LED_ORANGE_HIGH);
+  m->drawLine(centerX, centerY-1, centerX+endX, centerY+endY, LED_ORANGE_HIGH);
+  m->drawLine(centerX-1, centerY-1, centerX+endX, centerY+endY, LED_ORANGE_HIGH);
 
   // draw hour hand
-  len = (r*3)/4;
+  len = (r*1)/2;
   endX = sin(hour / 12.0 * M_PI * 2.0)*len;
   endY = -cos(hour / 12.0 * M_PI * 2.0)*len;
   m->drawLine(centerX, centerY, centerX+endX, centerY+endY, LED_RED_HIGH);
+  m->drawLine(centerX, centerY-1, centerX+endX, centerY+endY-1, LED_RED_HIGH);
+  m->drawLine(centerX-1, centerY, centerX+endX-1, centerY+endY, LED_RED_HIGH);
+  m->drawLine(centerX-1, centerY-1, centerX+endX-1, centerY+endY-1, LED_RED_HIGH);
 
   // draw second hand
   len = r;

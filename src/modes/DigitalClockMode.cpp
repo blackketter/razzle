@@ -1,12 +1,11 @@
-#include "RazzleMode.h"
+#include "ClockMode.h"
 
-class DigitalClockMode : public RazzleMode {
+class DigitalClockMode : public ClockMode {
   public:
     virtual const char* name() { return "Digital"; }
     virtual void draw(FastLED_NeoMatrix* m);
     virtual framerate_t fps() { return 0.2; }
     virtual bool canRun() { return getDevice()->width > 10 && getDevice()->height > 10 && clock.hasBeenSet(); }
-    virtual bool wantsToRun() { return clock.hour() > 22 || clock.hour() < 7; }
     virtual bool dither() { return false; }
   private:
 

@@ -17,11 +17,13 @@ typedef float framerate_t;
 typedef uint16_t pixel_t;
 
 bool setLEDMode(const char* newmode);
+bool isLEDMode(const char* ismode);
 void setNextLEDMode(bool allowWants = false);
 void setNextLEDModeSet();
 bool shouldAutoSwitch();
 const char* getLEDMode();
 millis_t lastModeSwitch();
+void resetLastModeSwitch();
 
 uint8_t getBrightness();  // depends on whether it's day or night
 uint8_t getNightBrightness();
