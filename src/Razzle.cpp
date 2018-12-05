@@ -160,6 +160,7 @@ void loop()
         console.debugln("PIR low");
         if (getDevice()->relayPin) {
           digitalWrite(getDevice()->relayPin, true );
+          console.debugln("relay on");
         }
         setLEDMode("OFF");
       }
@@ -168,6 +169,7 @@ void loop()
         console.debugln("PIR high");
         if (getDevice()->relayPin) {
           digitalWrite(getDevice()->relayPin, false );
+          console.debugln("relay off");
         }
         setLEDMode("ON");
       }

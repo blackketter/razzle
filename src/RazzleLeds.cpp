@@ -179,7 +179,13 @@ void  setupLeds() {
 
 
 void interpolateFrame() {
-  uint8_t fract8 = ((nowMillis - lastFrameMillis) * 256) / (nextFrameMillis - lastFrameMillis);
+	uint8_t fract8;
+	if (nextFrameMillis == lastFrameMillis) {
+		fract8 = 0;
+	} else {
+  	fract8 = ((nowMillis - lastFrameMillis) * 256) / (nextFrameMillis - lastFrameMillis);
+  }
+
   if (fract8 == 0) {
     memmove(leds, frames[lastFrame], num_leds * sizeof(CRGB));
   } else {
@@ -208,32 +214,42 @@ const char* getLEDMode() {
 }
 
 bool setLEDMode(const char* newMode) {
+//	console.debugln("setledmode");
   if (newMode == nullptr) return false;
   RazzleMode* namedMode = RazzleMode::named(newMode);
   if (namedMode == nullptr) return false;
   if (!namedMode->canRun()) return false;
   if (currMode == namedMode) return true;
 
+//	console.debugln("resetLastModeSwitch");
 	resetLastModeSwitch();
 
+//	console.debugln("end");
   if (currMode) { currMode->end(); }
   currMode = namedMode;  // 120 led long string is about 100fps, dithering at about 50fps
 
+//	console.debugln("setDither");
   if (maxSegmentLen() > 120) {
     FastLED.setDither( 0 );
   } else {
   	FastLED.setDither(currMode->dither());
   }
+//	console.debugln("begin");
 	currMode->begin();
   lastFrame = 0;
   lastFrameMillis = nowMillis;
+//	console.debugln("fill_solid");
   fill_solid( frames[lastFrame], num_leds, CRGB::Black);
   render(frames[lastFrame]);
 
+//	console.debugln("nextFrameMillis");
   nextFrame = 1;
   nextFrameMillis = nowMillis + frameIntervalMillis;
+//	console.debugln("fill_solid");
   fill_solid( frames[nextFrame], num_leds, CRGB::Black);
+//	console.debugln("render");
   render(frames[nextFrame]);
+
   return true;
 }
 
@@ -312,7 +328,7 @@ void loopLeds() {
     render(frames[nextFrame]);
   }
 
-  interpolateFrame();
+	interpolateFrame();
   FastLED.show(getBrightness());
   theFPSCommand.newFrame();
 }

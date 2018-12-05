@@ -56,6 +56,3 @@ led_t maxSegmentLen() {
 
   return maxSegmentLenCache;
 }
-
-
-
