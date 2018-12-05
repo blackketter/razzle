@@ -17,7 +17,6 @@
 
 #include "NTPClient.h"
 
-#include "RazzleCommands.h"
 #include "RazzleDevice.h"
 
 Switch* pir;
@@ -41,33 +40,6 @@ bool pressed;
 bool released;
 
 uint32_t autoSwitchInterval = 1000L * 5 * 60;
-
-
-class SwitchCommand : public Command {
-  public:
-    const char* getName() { return "switch"; }
-    const char* getHelp() { return ("set autoswitch interval in seconds (0 to disable)"); }
-    void execute(Stream* c, uint8_t paramCount, char** params) {
-      uint32_t b = 0;
-      if (paramCount == 1) {
-        b = atoi(params[1]);
-        autoSwitchInterval = b*1000;
-      }
-      c->printf("autoswitch interval: %d seconds\n", autoSwitchInterval/1000);
-    }
-};
-SwitchCommand theSwitchCommand;
-
-class NextCommand : public Command {
-  public:
-    const char* getName() { return "next"; }
-    const char* getHelp() { return ("switch to next mode"); }
-    void execute(Stream* c, uint8_t paramCount, char** params) {
-      setNextLEDMode(true);
-    }
-};
-NextCommand theNextCommand;
-
 //bool lastRadar = false;
 
 void recover() {

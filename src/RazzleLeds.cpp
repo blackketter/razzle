@@ -1,7 +1,6 @@
 #include "RazzleLeds.h"
 #include <colorutils.h>
 #include <Clock.h>
-#include "RazzleCommands.h"
 #include "Razzle.h"
 #include "RazzleDevice.h"
 //#include "GFX_Buffer.h"
@@ -9,7 +8,10 @@
 #include "Commands/FPSCommand.h"
 FPSCommand theFPSCommand;
 
+#include "RazzleMode.h"
 #include "RazzleModes.h"
+
+#include "FastLED_NeoMatrix.h"
 
 led_t num_leds;
 
