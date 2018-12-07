@@ -3,7 +3,7 @@
 const devInfo devices[] = {
 //                                  dimensions  color max   brightness   pins     led
 //  MAC address           Name           w   h  order mA     day night relay  pir  segments
-  { "5C:CF:7F:C3:AD:DC", "RazzleButton", 1,  1, RGB,  500,   128,  10,     0,  0,  {1} },
+  { "5C:CF:7F:C3:AD:DC", "RazzleButton", 1,  1, GRB,  500,   128,  10,     0,  0,  {1} },
   { "5C:CF:7F:C3:AD:F8", "RazzleStrip",  1, 60, GRB, 2000,   128,  10,     0,  0,  {60} },
   { "B4:E6:2D:89:0D:C9", "MiniLoo",     12, 16, GRB, 2400,    32,   4,     0,  0,  {32,32,32,32,32,32} },
   { "30:AE:A4:39:12:AC", "PeggyLoo",    22, 30, GRB, 9000,    32,   4,     0,  0,  {120,120,120,120,120,60} },

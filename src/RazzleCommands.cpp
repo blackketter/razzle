@@ -96,6 +96,7 @@ class NextCommand : public Command {
     const char* getHelp() { return ("switch to next mode"); }
     void execute(Stream* c, uint8_t paramCount, char** params) {
       setNextLEDMode(true);
+      c->printf("LED Mode: %s\n", getLEDMode());
     }
 };
 NextCommand theNextCommand;
