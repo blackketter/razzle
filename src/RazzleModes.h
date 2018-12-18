@@ -7,6 +7,7 @@ const char* colorModes[] =
   "Fire2",
   "Analog",
   "Digital",
+  "Word",
   "Lines",
   "Fire",
   "Life",

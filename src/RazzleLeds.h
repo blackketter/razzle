@@ -14,7 +14,7 @@
 
 typedef uint16_t led_t;
 typedef float framerate_t;
-typedef uint16_t pixel_t;
+typedef int16_t pixel_t;
 
 bool setLEDMode(const char* newmode);
 bool isLEDMode(const char* ismode);

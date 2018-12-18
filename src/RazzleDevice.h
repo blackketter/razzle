@@ -55,6 +55,7 @@ struct devInfo {
   uint8_t defaultNightBrightness;
   uint8_t relayPin;
   uint8_t pirPin;
+  uint8_t matrixType;
   led_t segment[MAX_SEGMENTS];
 };
 

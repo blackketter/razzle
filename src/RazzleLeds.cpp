@@ -173,8 +173,7 @@ void  setupLeds() {
   FastLED.setTemperature(UncorrectedTemperature);
   FastLED.show(getBrightness());
 
-  matrix = new FastLED_NeoMatrix(leds, getDevice()->width, getDevice()->height,
-  	NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG);
+  matrix = new FastLED_NeoMatrix(leds, getDevice()->width, getDevice()->height, getDevice()->matrixType);
 }
 
 
