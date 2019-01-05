@@ -6,13 +6,13 @@ class Fire2Mode : public RazzleMode {
     virtual void draw(FastLED_NeoMatrix* m);
     virtual framerate_t fps() { return 30; }
     virtual bool canRun() { return numPixels() > 1; }
-    virtual void begin() {
-      _noise = new uint8_t[numPixels()];
-      _heat = new uint8_t[numPixels()];
+    virtual void begin(uint16_t w, uint16_t h) {
+      _noise = new uint8_t[w*h];
+      _heat = new uint8_t[w*h];
 
       // some defaults, based on display dimensions
-      _height = getDevice()->height / 10.0;
-      _speed = getDevice()->width;
+      _height = h / 10.0;
+      _speed = w;
     }
     virtual void end() {  delete _noise; delete _heat;}
     float getHeight() { return _height; };

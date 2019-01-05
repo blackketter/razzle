@@ -13,11 +13,12 @@ class LinesMode : public RazzleMode {
       uint16_t y = _lasty;
       _lastx = random(w);
       _lasty = random(h);
-      m->drawLine(x, y, _lastx, _lasty, _color++);
+      CRGB rgb = ColorFromPalette( HeatColors_p, _color++);
+      m->drawLine(x, y, _lastx, _lasty, m->Color(rgb));
     };
   private:
     uint16_t _lastx, _lasty;
-    uint16_t _color;
+    uint8_t _color;
 };
 
 LinesMode theLinesMode;

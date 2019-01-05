@@ -7,7 +7,7 @@ class WordClockMode : public ClockMode {
     virtual framerate_t fps() { return 2*getDevice()->width; }
     virtual bool canRun() { return getDevice()->width >= 5 && getDevice()->height >= 7 && clock.hasBeenSet(); }
     virtual bool dither() { return false; }
-    virtual void begin() { scrollPos = 0/* - getDevice()->width*/; }
+    virtual void begin(uint16_t w, uint16_t h) { scrollPos = w; }
   private:
     pixel_t scrollPos = 0;
 };
@@ -17,7 +17,7 @@ class WordClockMode : public ClockMode {
 void WordClockMode::draw(FastLED_NeoMatrix* m) {
 
   m->fillScreen(LED_BLACK);
-  m->setTextColor(LED_WHITE_MEDIUM, LED_BLACK),
+  m->setTextColor(LED_RED_HIGH, LED_BLACK),
   m->setCursor(scrollPos, 0);
   uint8_t size = m->height()/7;
   m->setTextSize(size);

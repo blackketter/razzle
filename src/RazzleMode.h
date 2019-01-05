@@ -14,7 +14,7 @@ class RazzleMode {
 
     virtual const char* name() = 0;
 
-    virtual void begin() {}
+    virtual void begin( uint16_t w, uint16_t h) {}
     virtual void idle() {}
     virtual void end() {}
 

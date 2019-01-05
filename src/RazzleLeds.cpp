@@ -8,10 +8,33 @@
 #include "Commands/FPSCommand.h"
 FPSCommand theFPSCommand;
 
+const LEDColorCorrection defaultCorrection = TypicalSMD5050; // TypicalLEDStrip;
+const ColorTemperature defaultTemperature = DirectSunlight;
+
 #include "RazzleMode.h"
 #include "RazzleModes.h"
 
 #include "FastLED_NeoMatrix.h"
+// gO is gamma offset
+const uint8_t gO = 1;
+const uint8_t gamma8[] = {
+       0,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,
+    0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  0+gO,  1+gO,  1+gO,  1+gO,  1+gO,
+    1+gO,  1+gO,  1+gO,  1+gO,  1+gO,  1+gO,  1+gO,  1+gO,  1+gO,  2+gO,  2+gO,  2+gO,  2+gO,  2+gO,  2+gO,  2+gO,
+    2+gO,  3+gO,  3+gO,  3+gO,  3+gO,  3+gO,  3+gO,  3+gO,  4+gO,  4+gO,  4+gO,  4+gO,  4+gO,  5+gO,  5+gO,  5+gO,
+    5+gO,  6+gO,  6+gO,  6+gO,  6+gO,  7+gO,  7+gO,  7+gO,  7+gO,  8+gO,  8+gO,  8+gO,  9+gO,  9+gO,  9+gO, 10+gO,
+   10+gO, 10+gO, 11+gO, 11+gO, 11+gO, 12+gO, 12+gO, 13+gO, 13+gO, 13+gO, 14+gO, 14+gO, 15+gO, 15+gO, 16+gO, 16+gO,
+   17+gO, 17+gO, 18+gO, 18+gO, 19+gO, 19+gO, 20+gO, 20+gO, 21+gO, 21+gO, 22+gO, 22+gO, 23+gO, 24+gO, 24+gO, 25+gO,
+   25+gO, 26+gO, 27+gO, 27+gO, 28+gO, 29+gO, 29+gO, 30+gO, 31+gO, 32+gO, 32+gO, 33+gO, 34+gO, 35+gO, 35+gO, 36+gO,
+   37+gO, 38+gO, 39+gO, 39+gO, 40+gO, 41+gO, 42+gO, 43+gO, 44+gO, 45+gO, 46+gO, 47+gO, 48+gO, 49+gO, 50+gO, 50+gO,
+   51+gO, 52+gO, 54+gO, 55+gO, 56+gO, 57+gO, 58+gO, 59+gO, 60+gO, 61+gO, 62+gO, 63+gO, 64+gO, 66+gO, 67+gO, 68+gO,
+   69+gO, 70+gO, 72+gO, 73+gO, 74+gO, 75+gO, 77+gO, 78+gO, 79+gO, 81+gO, 82+gO, 83+gO, 85+gO, 86+gO, 87+gO, 89+gO,
+   90+gO, 92+gO, 93+gO, 95+gO, 96+gO, 98+gO, 99+gO,101+gO,102+gO,104+gO,105+gO,107+gO,109+gO,110+gO,112+gO,114+gO,
+  115+gO,117+gO,119+gO,120+gO,122+gO,124+gO,126+gO,127+gO,129+gO,131+gO,133+gO,135+gO,137+gO,138+gO,140+gO,142+gO,
+  144+gO,146+gO,148+gO,150+gO,152+gO,154+gO,156+gO,158+gO,160+gO,162+gO,164+gO,167+gO,169+gO,171+gO,173+gO,175+gO,
+  177+gO,180+gO,182+gO,184+gO,186+gO,189+gO,191+gO,193+gO,196+gO,198+gO,200+gO,203+gO,205+gO,208+gO,210+gO,213+gO,
+  215+gO,218+gO,220+gO,223+gO,225+gO,228+gO,231+gO,233+gO,236+gO,239+gO,241+gO,244+gO,247+gO,249+gO,252+gO,   255 };
+
 
 led_t num_leds;
 
@@ -83,35 +106,35 @@ void  setupLeds() {
     	// fucking templates mean that this needs to be hardcoded
     	c = getDevice()->segment[i++];
     	if (c) {
-    		FastLED.addLeds<CHIPSET, LED_DATA_PIN0, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+    		FastLED.addLeds<CHIPSET, LED_DATA_PIN0, RGB>(leds, offset, c).setCorrection( defaultCorrection );
 				offset += c;
 				c = getDevice()->segment[i++];
 				if (c) {
-					FastLED.addLeds<CHIPSET, LED_DATA_PIN1, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+					FastLED.addLeds<CHIPSET, LED_DATA_PIN1, RGB>(leds, offset, c).setCorrection( defaultCorrection );
 					offset += c;
 					c = getDevice()->segment[i++];
 					if (c) {
-						FastLED.addLeds<CHIPSET, LED_DATA_PIN2, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+						FastLED.addLeds<CHIPSET, LED_DATA_PIN2, RGB>(leds, offset, c).setCorrection( defaultCorrection );
 						offset += c;
 						c = getDevice()->segment[i++];
 						if (c) {
-							FastLED.addLeds<CHIPSET, LED_DATA_PIN3, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+							FastLED.addLeds<CHIPSET, LED_DATA_PIN3, RGB>(leds, offset, c).setCorrection( defaultCorrection );
 							offset += c;
 							c = getDevice()->segment[i++];
 							if (c) {
-								FastLED.addLeds<CHIPSET, LED_DATA_PIN4, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+								FastLED.addLeds<CHIPSET, LED_DATA_PIN4, RGB>(leds, offset, c).setCorrection( defaultCorrection );
 								offset += c;
 								c = getDevice()->segment[i++];
 								if (c) {
-									FastLED.addLeds<CHIPSET, LED_DATA_PIN5, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+									FastLED.addLeds<CHIPSET, LED_DATA_PIN5, RGB>(leds, offset, c).setCorrection( defaultCorrection );
 									offset += c;
 									c = getDevice()->segment[i++];
 									if (c) {
 										c = getDevice()->segment[i++];
-										FastLED.addLeds<CHIPSET, LED_DATA_PIN6, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+										FastLED.addLeds<CHIPSET, LED_DATA_PIN6, RGB>(leds, offset, c).setCorrection( defaultCorrection );
 										offset += c;
 										if (c) {
-											FastLED.addLeds<CHIPSET, LED_DATA_PIN7, RGB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+											FastLED.addLeds<CHIPSET, LED_DATA_PIN7, RGB>(leds, offset, c).setCorrection( defaultCorrection );
     								}
     							}
     						}
@@ -125,35 +148,35 @@ void  setupLeds() {
     	// fucking templates mean that this needs to be hardcoded
     	c = getDevice()->segment[i++];
     	if (c) {
-    		FastLED.addLeds<CHIPSET, LED_DATA_PIN0, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+    		FastLED.addLeds<CHIPSET, LED_DATA_PIN0, GRB>(leds, offset, c).setCorrection( defaultCorrection );
 				offset += c;
 				c = getDevice()->segment[i++];
 				if (c) {
-					FastLED.addLeds<CHIPSET, LED_DATA_PIN1, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+					FastLED.addLeds<CHIPSET, LED_DATA_PIN1, GRB>(leds, offset, c).setCorrection( defaultCorrection );
 					offset += c;
 					c = getDevice()->segment[i++];
 					if (c) {
-						FastLED.addLeds<CHIPSET, LED_DATA_PIN2, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+						FastLED.addLeds<CHIPSET, LED_DATA_PIN2, GRB>(leds, offset, c).setCorrection( defaultCorrection );
 						offset += c;
 						c = getDevice()->segment[i++];
 						if (c) {
-							FastLED.addLeds<CHIPSET, LED_DATA_PIN3, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+							FastLED.addLeds<CHIPSET, LED_DATA_PIN3, GRB>(leds, offset, c).setCorrection( defaultCorrection );
 							offset += c;
 							c = getDevice()->segment[i++];
 							if (c) {
-								FastLED.addLeds<CHIPSET, LED_DATA_PIN4, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+								FastLED.addLeds<CHIPSET, LED_DATA_PIN4, GRB>(leds, offset, c).setCorrection( defaultCorrection );
 								offset += c;
 								c = getDevice()->segment[i++];
 								if (c) {
-									FastLED.addLeds<CHIPSET, LED_DATA_PIN5, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+									FastLED.addLeds<CHIPSET, LED_DATA_PIN5, GRB>(leds, offset, c).setCorrection( defaultCorrection );
 									offset += c;
 									c = getDevice()->segment[i++];
 									if (c) {
-										FastLED.addLeds<CHIPSET, LED_DATA_PIN6, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+										FastLED.addLeds<CHIPSET, LED_DATA_PIN6, GRB>(leds, offset, c).setCorrection( defaultCorrection );
 										offset += c;
 										c = getDevice()->segment[i++];
 										if (c) {
-											FastLED.addLeds<CHIPSET, LED_DATA_PIN7, GRB>(leds, offset, c).setCorrection( TypicalLEDStrip );
+											FastLED.addLeds<CHIPSET, LED_DATA_PIN7, GRB>(leds, offset, c).setCorrection( defaultCorrection );
     								}
     							}
     						}
@@ -169,8 +192,8 @@ void  setupLeds() {
 
   FastLED.setMaxPowerInVoltsAndMilliamps	( 5, milliAmpsMax);
 
-  FastLED.setCorrection(UncorrectedColor);
-  FastLED.setTemperature(UncorrectedTemperature);
+  FastLED.setCorrection(defaultCorrection);
+  FastLED.setTemperature(defaultTemperature);
   FastLED.show(getBrightness());
 
   matrix = new FastLED_NeoMatrix(leds, getDevice()->width, getDevice()->height, getDevice()->matrixType);
@@ -228,13 +251,13 @@ bool setLEDMode(const char* newMode) {
   currMode = namedMode;  // 120 led long string is about 100fps, dithering at about 50fps
 
 //	console.debugln("setDither");
-  if (maxSegmentLen() > 120) {
+//  if (maxSegmentLen() > 120) {
     FastLED.setDither( 0 );
-  } else {
-  	FastLED.setDither(currMode->dither());
-  }
+//  } else {
+//  	FastLED.setDither(currMode->dither());
+//  }
 //	console.debugln("begin");
-	currMode->begin();
+	currMode->begin(getDevice()->width,getDevice()->height);
   lastFrame = 0;
   lastFrameMillis = nowMillis;
 //	console.debugln("fill_solid");
