@@ -3,9 +3,9 @@
 
 const char* colorModes[] =
 {
-  "Cops",
   "Vortex",
   "Fire2",
+  "Waterfall",
   "Analog",
   "Digital",
   "Word",
@@ -19,6 +19,7 @@ const char* colorModes[] =
   "RainbowRotate",
   "Noise",
   "WhiteNoise",
+  "Cops",
   nullptr
 };
 

@@ -14,7 +14,7 @@ class LinesMode : public RazzleMode {
       _lastx = random(w);
       _lasty = random(h);
       CRGB rgb = ColorFromPalette( HeatColors_p, _color++);
-      m->drawLine(x, y, _lastx, _lasty, m->Color(rgb));
+      m->drawLine(x, y, _lastx, _lasty, FastLED_NeoMatrix::Color(rgb));
     };
   private:
     uint16_t _lastx, _lasty;

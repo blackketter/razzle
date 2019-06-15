@@ -10,7 +10,7 @@ class RazzleMode {
     RazzleMode();
 
     virtual void draw(CRGB* frame) {}  // must implement one of the draw methods
-    virtual void draw(FastLED_NeoMatrix* matrix) { draw(matrix->getLeds()); }
+    virtual void draw(FastLED_NeoMatrix* matrix) { draw((CRGB*)matrix->getLeds()); }
 
     virtual const char* name() = 0;
 
@@ -20,7 +20,8 @@ class RazzleMode {
 
     virtual bool wantsToRun() { return false; }
     virtual bool canRun() { return true; }
-    virtual bool dither() { return true; }
+    virtual bool dither() { return true; } // frames should be dithered
+    virtual bool interpolate() { return true; }  // frames should be interpolated
 
     virtual framerate_t fps() { return 0; } // as fast as possible
 

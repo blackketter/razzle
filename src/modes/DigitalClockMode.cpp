@@ -4,10 +4,11 @@ class DigitalClockMode : public ClockMode {
   public:
     virtual const char* name() { return "Digital"; }
     virtual void draw(FastLED_NeoMatrix* m);
-    virtual framerate_t fps() { return 0; }
+    virtual framerate_t fps() { return 2; }
     virtual bool canRun() { return getDevice()->width > 10 && getDevice()->height > 10 && clock.hasBeenSet(); }
     virtual bool dither() { return false; }
   private:
+    uint8_t _colorindex;
 
 };
 
@@ -25,21 +26,21 @@ void DigitalClockMode::draw(FastLED_NeoMatrix* m) {
 
   CRGB c = ColorFromPalette( HeatColors_p, random(16,240));
   if ( clock.hourFormat12() > 9) {
-    m->drawChar(0, 0, (clock.hourFormat12() / 10)+'0', m->Color(c), LED_BLACK, size);
+    m->drawChar(0, 0, (clock.hourFormat12() / 10)+'0', FastLED_NeoMatrix::Color(c), LED_BLACK, size);
   }
 
   char d = (clock.hourFormat12() % 10) + '0';
   if (d == '0') d = 'O';
   c = ColorFromPalette( HeatColors_p, random(16,240));
-  m->drawChar(centerX, 0, d, m->Color(c), LED_BLACK, size);
+  m->drawChar(centerX, 0, d, FastLED_NeoMatrix::Color(c), LED_BLACK, size);
 
   d = (clock.minute()/10)+'0';
   if (d == '0') d = 'O';
   c = ColorFromPalette( HeatColors_p, random(16,240));
-  m->drawChar(0, centerY, d, m->Color(c), LED_BLACK, size);
+  m->drawChar(0, centerY, d, FastLED_NeoMatrix::Color(c), LED_BLACK, size);
 
   d = (clock.minute()%10)+'0';
   if (d == '0') d = 'O';
   c = ColorFromPalette( HeatColors_p, random(16,240));
-  m->drawChar(centerX, centerY, d, m->Color(c), LED_BLACK, size);
+  m->drawChar(centerX, centerY, d, FastLED_NeoMatrix::Color(c), LED_BLACK, size);
 }

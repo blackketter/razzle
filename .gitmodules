@@ -22,3 +22,6 @@
 [submodule "lib/FastLED_NeoMatrix"]
 	path = lib/FastLED_NeoMatrix
 	url = https://github.com/blackketter/FastLED_NeoMatrix.git
+[submodule "lib/Adafruit-GFX-Library"]
+	path = lib/Adafruit-GFX-Library
+	url = https://github.com/blackketter/Adafruit-GFX-Library.git

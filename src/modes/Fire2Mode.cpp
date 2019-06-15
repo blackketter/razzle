@@ -75,7 +75,6 @@ FireCommand theFireCommand;
 
 // here we go
 void Fire2Mode::draw(FastLED_NeoMatrix* m) {
-    CRGB* leds = m->getLeds();
     uint8_t Width  = m->width();
     uint8_t Height = m->height();
     uint8_t CentreX =  (Width / 2) - 1;
@@ -115,7 +114,7 @@ void Fire2Mode::draw(FastLED_NeoMatrix* m) {
     for (uint8_t j = 0; j < Height; j++) {
       uint32_t joffset = scale_y * (j - CentreY);
       uint16_t data = ((inoise16(x + ioffset, y + joffset, z)) + 1);
-      _noise[i*Width+j] = data >> 8;
+      _noise[i*Height+j] = data >> 8;
     }
   }
 
@@ -124,15 +123,15 @@ void Fire2Mode::draw(FastLED_NeoMatrix* m) {
   // It could be random pixels or anything else as well.
   for (uint8_t x = 0; x < Width; x++) {
     // draw
-    leds[m->XY(x, Height-1)] = ColorFromPalette( HeatColors_p, _noise[x*Width+0]);
+    m->drawPixelCRGB(x, Height-1, ColorFromPalette( HeatColors_p, _noise[x*Height+0]));
     // and fill the lowest line of the heatmap, too
-    _heat[m->XY(x, Height-1)] = _noise[x*Width+0];
+    _heat[x*Height+Height-1] = _noise[x*Height+0];
   }
 
   // Copy the heatmap one line up for the scrolling.
   for (uint8_t y = 0; y < Height - 1; y++) {
     for (uint8_t x = 0; x < Width; x++) {
-      _heat[m->XY(x, y)] = _heat[m->XY(x, y + 1)];
+      _heat[x*Height + y] = _heat[x*Height + y + 1];
     }
   }
 
@@ -141,7 +140,7 @@ void Fire2Mode::draw(FastLED_NeoMatrix* m) {
     for (uint8_t x = 0; x < Width; x++) {
 
       // get data from the calculated noise field
-      uint8_t dim = _noise[x*Width+y];
+      uint8_t dim = _noise[x*Height+y];
 
       // This number is critical
       // If it´s to low (like 1.1) the fire dosn´t go up far enough.
@@ -154,14 +153,14 @@ void Fire2Mode::draw(FastLED_NeoMatrix* m) {
       dim = 255 - dim;
 
       // here happens the scaling of the heatmap
-      _heat[m->XY(x, y)] = scale8(_heat[m->XY(x, y)] , dim);
+      _heat[x*Height + y] = scale8(_heat[x*Height + y] , dim);
     }
   }
 
   // Now just map the colors based on the heatmap.
   for (uint8_t y = 0; y < Height - 1; y++) {
     for (uint8_t x = 0; x < Width; x++) {
-      leds[m->XY(x, y)] = ColorFromPalette( HeatColors_p, _heat[m->XY(x, y)]);
+      m->drawPixelCRGB(x, y, ColorFromPalette( HeatColors_p, _heat[x*Height + y]));
     }
   }
 }

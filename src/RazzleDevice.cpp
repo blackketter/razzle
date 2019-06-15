@@ -3,6 +3,7 @@
 #include "FastLED_NeoMatrix.h"
 
 #define PEGGYMATRIXTYPE (NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG)
+#define SINGLEROWSTYPE (NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS)
 
 
 const devInfo devices[] = {
@@ -17,6 +18,7 @@ const devInfo devices[] = {
   { "84:F3:EB:3B:7E:1C", "RazzlePir",    1, 12, GRB,  500,   128,  10,    D1, D5,               0, {12} },
   { "84:F3:EB:3B:7A:9E", "RazzleStar",   1,  7, GRB,  500,   128,  10,     0,  0,               0, {12} },
   { "80:7D:3A:47:6B:02", "RazzleSquare", 8,  8, GRB,  500,   128,  10,     0,  0,               0, {64} },
+  { "30:AE:A4:39:18:A0", "RazzleRoof",  75,  2, RGB,1000,   128,  10,     0,  0,  PEGGYMATRIXTYPE, {75,75,75,75,75,75,75,75,75,75} },
   { nullptr,             "RazzleUndef",  1,  1, RGB,  500,   127,  10,     0,  0,               0, {1} }
 };
 

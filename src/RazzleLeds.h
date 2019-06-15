@@ -17,11 +17,14 @@ typedef float framerate_t;
 typedef int16_t pixel_t;
 
 bool setLEDMode(const char* newmode);
+const char* getLEDMode();
 bool isLEDMode(const char* ismode);
+
 void setNextLEDMode(bool allowWants = false);
 void setNextLEDModeSet();
+
 bool shouldAutoSwitch();
-const char* getLEDMode();
+
 millis_t lastModeSwitch();
 void resetLastModeSwitch();
 
@@ -38,7 +41,4 @@ void  loopLeds();
 extern WiFiConsole console;
 
 CRGB white(uint8_t y);
-
-
-
 #endif
