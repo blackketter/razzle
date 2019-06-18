@@ -4,7 +4,7 @@ class DigitalClockMode : public ClockMode {
   public:
     virtual const char* name() { return "Digital"; }
     virtual void draw(FastLED_NeoMatrix* m);
-    virtual framerate_t fps() { return 2; }
+    virtual framerate_t fps() { return 0.5; }
     virtual bool canRun() { return getDevice()->width > 10 && getDevice()->height > 10 && clock.hasBeenSet(); }
     virtual bool dither() { return false; }
   private:
