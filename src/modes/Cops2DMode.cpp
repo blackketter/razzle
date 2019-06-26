@@ -22,7 +22,7 @@ class Animation2DMode : public RazzleMode {
     Animation2DMode(const char* name, const Animation2DFrame* frames) : _name(name), _Animation2DFrames(frames) {}
     virtual const char* name() { return _name; }
     virtual void draw(FastLED_NeoMatrix* m);
-    virtual bool canRun() { return true; }
+    virtual bool canRun() { return strcmp(getDevice()->hostname, "RazzleString") == 0; }
   private:
    frameIndex_t _frameIndex = 0;
    const char* _name;
@@ -60,28 +60,25 @@ void Animation2DMode::draw(FastLED_NeoMatrix* m) {
     m->fillRect(x, y, w, h, _Animation2DFrames[_frameIndex].color);
   }
 }
-const uint8_t COPS_LEDS = 50;
-const uint8_t MIDDLE_LED = COPS_LEDS/2;
-const uint8_t SEG_LEN = 6;
 
 const Animation2DFrame copsAnimation2D[] = {
-  { LED_WHITE_HIGH, 0,0,50,25, 30},
-  { LED_BLACK, 0,0,50,25, 160},
-  { LED_WHITE_HIGH, 0,0,50,25, 30},
-  { LED_BLACK, 0,0,50,25, 160},
-  { LED_WHITE_HIGH, 0,0,50,25, 30},
-  { LED_BLACK, 0,0,50,25, 160},
+  { LED_WHITE_HIGH, 0,0,50,100, 30},
+  { LED_BLACK, 0,0,50,100, 160},
+  { LED_WHITE_HIGH, 0,0,50,100, 30},
+  { LED_BLACK, 0,0,50,100, 160},
+  { LED_WHITE_HIGH, 0,0,50,100, 30},
+  { LED_BLACK, 0,0,50,100, 160},
 
-  { LED_BLUE_HIGH, 0,0,50,25, 320},
+  { LED_BLUE_HIGH, 0,0,50,100, 320},
 
-  { LED_WHITE_HIGH, 51,0,50,25, 30},
-  { LED_BLACK, 51,0,50,25, 160},
-  { LED_WHITE_HIGH, 51,0,50,25, 30},
-  { LED_BLACK, 51,0,50,25, 160},
-  { LED_WHITE_HIGH, 51,0,50,25, 30},
-  { LED_BLACK, 51,0,50,25, 160},
+  { LED_WHITE_HIGH, 51,0,50,100, 30},
+  { LED_BLACK, 51,0,50,100, 160},
+  { LED_WHITE_HIGH, 51,0,50,100, 30},
+  { LED_BLACK, 51,0,50,100, 160},
+  { LED_WHITE_HIGH, 51,0,50,100, 30},
+  { LED_BLACK, 51,0,50,100, 160},
 
-  { LED_RED_HIGH, 51,0,50,25, 320},
+  { LED_RED_HIGH, 51,0,50,100, 320},
 
   { 0, 0,0,0,0, ANIMATION2D_END}
 };
