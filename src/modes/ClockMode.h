@@ -4,7 +4,7 @@
 
 class ClockMode : public RazzleMode {
   public:
-    virtual bool wantsToRun() { return clock.hour() > 22 || clock.hour() < 7; }
+    virtual bool wantsToRun() { return theClock.hour() > 22 || theClock.hour() < 7; }
   private:
 
 };

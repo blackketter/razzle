@@ -5,7 +5,7 @@ class AnalogClockMode : public ClockMode {
     virtual const char* name() { return "Analog"; }
     virtual void draw(FastLED_NeoMatrix* m);
     virtual framerate_t fps() { return 1.0; }
-    virtual bool canRun() { return getDevice()->width > 7 && getDevice()->height > 7 && clock.hasBeenSet(); }
+    virtual bool canRun() { return getDevice()->width > 7 && getDevice()->height > 7 && theClock.hasBeenSet(); }
     virtual bool dither() { return false; }
   private:
 
@@ -27,10 +27,10 @@ void AnalogClockMode::draw(FastLED_NeoMatrix* m) {
   float len;
   pixel_t endX, endY;
   float hour, minute, second;
-  second = (float)clock.second() + (float)clock.fracMillis()/1000.0;
-  minute = clock.minute() + second/60.0;
+  second = (float)theClock.second() + (float)theClock.fracMillis()/1000.0;
+  minute = theClock.minute() + second/60.0;
 
-  hour = clock.hour();
+  hour = theClock.hour();
     if (hour > 11) {
     hour = hour - 12;
   }
@@ -63,7 +63,7 @@ void AnalogClockMode::draw(FastLED_NeoMatrix* m) {
 
 
   // draw am/pm indicator
-  if (!clock.isAM()) {
+  if (!theClock.isAM()) {
     m->drawPixel(m->width()-1, m->height()-1, LED_RED_HIGH);
   }
 }

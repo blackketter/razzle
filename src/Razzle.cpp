@@ -24,11 +24,11 @@ Switch* button;
 
 WiFiThing thing;
 
-Clock clock(&usPT);
+Clock theClock(&usPT);
 
 bool isDay() {
-  uint8_t hour = clock.hour();
-  return clock.hasBeenSet() && (hour >= 8) && (hour < 17);  // daytime is 8 to 5.  if the clock hasn't been set, it's night for safety
+  uint8_t hour = theClock.hour();
+  return theClock.hasBeenSet() && (hour >= 8) && (hour < 17);  // daytime is 8 to 5.  if the clock hasn't been set, it's night for safety
 }
 
 

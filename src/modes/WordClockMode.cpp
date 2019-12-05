@@ -5,7 +5,7 @@ class WordClockMode : public ClockMode {
     virtual const char* name() { return "Word"; }
     virtual void draw(FastLED_NeoMatrix* m);
     virtual framerate_t fps() { return 2*getDevice()->width; }
-    virtual bool canRun() { return getDevice()->width >= 5 && getDevice()->height >= 7 && clock.hasBeenSet(); }
+    virtual bool canRun() { return getDevice()->width >= 5 && getDevice()->height >= 7 && theClock.hasBeenSet(); }
     virtual bool dither() { return false; }
     virtual void begin(uint16_t w, uint16_t h) { scrollPos = w; }
   private:
@@ -25,7 +25,7 @@ void WordClockMode::draw(FastLED_NeoMatrix* m) {
 
   char time[100];
 
-  sprintf(time, "  %d:%02d  ", clock.hourFormat12(), clock.minute());
+  sprintf(time, "  %d:%02d  ", theClock.hourFormat12(), theClock.minute());
 
   m->print(time);
 

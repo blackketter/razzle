@@ -6,5 +6,5 @@
 void recover();
 
 extern WiFiThing thing;
-extern Clock clock;
+extern Clock theClock;
 #endif
