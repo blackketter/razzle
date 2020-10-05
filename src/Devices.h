@@ -1,22 +1,11 @@
 #ifndef _Devices_
 #define _Devices_
 #include <RazzleMatrix.h>
-#define CHIPSET         WS2811
-#define LIGHT_SENSOR    (A0)
 
 #ifdef ESP8266
 #define BUTTON_PIN (D6)
 #define BUTTON_POLARITY (LOW)
 #define BUTTON_INPUT (INPUT_PULLUP)
-
-const uint8_t LED_DATA_PIN0 = D2;
-const uint8_t LED_DATA_PIN1 = D2;
-const uint8_t LED_DATA_PIN2 = D2;
-const uint8_t LED_DATA_PIN3 = D2;
-const uint8_t LED_DATA_PIN4 = D2;
-const uint8_t LED_DATA_PIN5 = D2;
-const uint8_t LED_DATA_PIN6 = D2;
-const uint8_t LED_DATA_PIN7 = D2;
 #endif
 
 #if defined(ESP32)
@@ -25,28 +14,12 @@ const uint8_t LED_DATA_PIN7 = D2;
 #define BUTTON_INPUT (INPUT_PULLDOWN)
 
 // esp32 doesn't use Dn for digital pin constants
-#define D1 (0)
-#define D4 (0)
-#define D5 (0)
-
-// 5 is no good
-const uint8_t LED_DATA_PIN0 = 23;
-const uint8_t LED_DATA_PIN1 = 16;
-const uint8_t LED_DATA_PIN2 = 17;
-const uint8_t LED_DATA_PIN3 = 19;
-const uint8_t LED_DATA_PIN4 = 4;
-const uint8_t LED_DATA_PIN5 = 18;
-const uint8_t LED_DATA_PIN6 = 13;
-const uint8_t LED_DATA_PIN7 = 15;
-const uint8_t LED_DATA_PIN8 = 0;
-const uint8_t LED_DATA_PIN9 = 2;
+#define D1 1
+#define D4 4
+#define D5 5
 
 #endif
 
-
-
-#define PEGGYMATRIXTYPE (NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG)
-#define SINGLEROWSTYPE (NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS)
 
 struct razzleDevice {
   const char* mac;
