@@ -46,20 +46,6 @@ class RecoverCommand : public Command {
 RecoverCommand theRecoverCommand;
 
 uint32_t autoSwitchInterval = 1000L * 5 * 60;
-class SwitchCommand : public Command {
-  public:
-    const char* getName() { return "switch"; }
-    const char* getHelp() { return ("set autoswitch interval in seconds (0 to disable)"); }
-    void execute(Console* c, uint8_t paramCount, char** params) {
-      uint32_t b = 0;
-      if (paramCount == 1) {
-        b = atoi(params[1]);
-        autoSwitchInterval = b*1000;
-      }
-      c->printf("autoswitch interval: %d seconds\n", autoSwitchInterval/1000);
-    }
-};
-SwitchCommand theSwitchCommand;
 
 const razzleDevice* getDevice() {
   const razzleDevice* cacheDev = nullptr;
@@ -127,18 +113,7 @@ void loop() {
   if (recoverMode) {
     // do not update LEDs or respond to button
   } else {
-    // update display
-    millis_t nowMillis = Uptime::millis();
 
-    if (matrix->shouldAutoSwitch() && autoSwitchInterval &&
-        (nowMillis - matrix->lastModeSwitch()) > autoSwitchInterval) {
-      matrix->setNextLEDMode(true);
-
-      //console.executeCommandLine("info");
-      //resetLastModeSwitch();
-
-      console.debugf("Autoswitched to mode %s\n", matrix->getLEDMode());
-    } else {
       if (button->longPress()) {
         matrix->setNextLEDModeSet();
         console.debugf("Long press, now mode: %s\n", matrix->getLEDMode());
@@ -173,7 +148,6 @@ void loop() {
           }
 */
       }
-    }
 
     if (pir) {
       pir->poll();
