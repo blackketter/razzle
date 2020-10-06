@@ -4,3 +4,4 @@
 .piolibdeps
 *.disabled
 .pio
+Credentials.h
