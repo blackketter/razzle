@@ -31,6 +31,7 @@ struct razzleDevice {
   RazzleMatrixConfig leds;
 };
 
+#define PEGGYMATRIXTYPE (NEO_MATRIX_BOTTOM + NEO_MATRIX_LEFT + NEO_MATRIX_COLUMNS + NEO_MATRIX_ZIGZAG)
 
 const razzleDevice devices[] = {
 //                                        relay  pir brightness    dims  color max   matrix           leds per

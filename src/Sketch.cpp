@@ -7,6 +7,7 @@
 #include "WiFiThing.h"
 
 #include <Console.h>
+#include "Commands/DateCommand.h"
 
 #include <RazzleMatrix.h>
 #include <DefaultRazzleModes.h>
@@ -21,10 +22,17 @@
 
 #include "NTPClient.h"
 
+#include "DefaultRazzleModeSets.h"
+
 Switch* pir;
 Switch* button;
 
 WiFiThing thing;
+int modeIndex = 0;
+int modeSetIndex = 0;
+void setNextLEDMode(bool allowWants = false);
+void setNextLEDModeSet();
+
 
 bool firstRun = true;
 
@@ -78,6 +86,7 @@ void setup() {
   console.debugf("Welcome to %s\n", getDevice()->hostname);
 
   matrix = setupLeds(&(getDevice()->leds));
+
   if (matrix == nullptr) {
     recoverMode = true;
     console.debugln("setupLeds failed: recover mode on");
@@ -93,7 +102,7 @@ void setup() {
       console.debugf("PIR is on pin %d\n",getDevice()->pirPin);
     }
 
-    matrix->setNextLEDMode(true);
+    setNextLEDMode(true);
     console.debugln("setup done");
   }
 
@@ -115,14 +124,14 @@ void loop() {
   } else {
 
       if (button->longPress()) {
-        matrix->setNextLEDModeSet();
+        setNextLEDModeSet();
         console.debugf("Long press, now mode: %s\n", matrix->getLEDMode());
       }
       if (button->pushedDuration() >  5000) {
         matrix->setLEDMode("Reboot");
       }
       if (button->pushed()) {
-        matrix->setNextLEDMode();
+        setNextLEDMode();
         console.debugf("Short press, now mode: %s\n", matrix->getLEDMode());
       } else if (button->released()) {
         if (matrix->isLEDMode("Reboot")) {
@@ -184,3 +193,118 @@ void loop() {
 
   firstRun = false;
 }
+
+///////////////////////////////////////////////////////////////////////////////
+// Mode switching
+///////////////////////////////////////////////////////////////////////////////
+const char* colorModes[] =
+{
+  "Vortex",
+  "Fire2",
+  "Waterfall",
+  "Analog",
+  "Digital",
+  "Word",
+  "Lines",
+  "Fire",
+  "Life",
+  "Breathing",
+  "Wave",
+  "Flashes",
+  "Zipper",
+  "RainbowRotate",
+  "Noise",
+  "WhiteNoise",
+  "Cops",
+  nullptr
+};
+
+const char* solidModes[] =
+{
+  "Off",
+  "On",
+  "Grey80",
+  "Grey40",
+  "Grey20",
+  "Grey10",
+  "Grey08",
+  "Grey04",
+  "Grey02",
+  "Grey01",
+  nullptr
+};
+
+const char** modeSets[] =
+{
+  colorModes,
+  solidModes,
+  nullptr
+};
+
+void setNextLEDMode(bool allowWants) {
+	const char* nextModeName;
+	RazzleMode* nextMode = nullptr;
+
+	if (allowWants) {
+		nextMode = RazzleMode::first();
+		int wantsCount = 0;
+		while (nextMode) {
+			if (nextMode->canRun() && nextMode->wantsToRun())
+				wantsCount++;;
+			nextMode = nextMode->next();
+		}
+		if (wantsCount) {
+			wantsCount = random(wantsCount);
+			nextMode = RazzleMode::first();
+			while (nextMode) {
+				if (nextMode->canRun() && nextMode->wantsToRun()) {
+					if (wantsCount == 0) {
+						break;
+					}
+					wantsCount--;
+				}
+				nextMode = nextMode->next();
+			}
+		}
+	}
+
+	if (nextMode == nullptr) {
+		do {
+			modeIndex++;
+			if (modeSets[modeSetIndex][modeIndex] == nullptr) {
+				modeIndex = 0;
+			}
+
+			nextModeName = modeSets[modeSetIndex][modeIndex];
+			nextMode = RazzleMode::named(nextModeName);
+
+		} while (nextMode == nullptr || !nextMode->canRun());
+	}
+	matrix->setLEDMode(nextMode->name());
+}
+
+void setNextLEDModeSet() {
+	modeSetIndex++;
+	if (modeSets[modeSetIndex] == nullptr) {
+		modeSetIndex = 0;
+		}
+	// only autoswitch if we are in the first (zeroth) set
+	matrix->autoSwitchEnable(modeSetIndex == 0);
+	modeIndex = 0;
+	if (!matrix->setLEDMode(modeSets[modeSetIndex][modeIndex])) {
+		setNextLEDMode();
+	}
+}
+
+
+class NextCommand : public Command {
+  public:
+    const char* getName() { return "next"; }
+    const char* getHelp() { return ("switch to next mode"); }
+    void execute(Console* c, uint8_t paramCount, char** params) {
+      setNextLEDMode(true);
+      c->printf("Next LED Mode: %s\n", RazzleMode::defaultMatrix()->getLEDMode());
+    }
+};
+NextCommand theNextCommand;
+
