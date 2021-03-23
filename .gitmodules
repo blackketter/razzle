@@ -25,3 +25,6 @@
 [submodule "lib/Adafruit-GFX-Library"]
 	path = lib/Adafruit-GFX-Library
 	url = https://github.com/blackketter/Adafruit-GFX-Library.git
+[submodule "lib/RazzleLib"]
+	path = lib/RazzleLib
+	url = https://github.com/blackketter/RazzleLib.git
